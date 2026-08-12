@@ -14,7 +14,7 @@ export async function DELETE(request, context) {
     const params = await context.params;
     const id = params.id;
 
-    // We need to fetch the registration first to know which event it belongs to
+    // Fetch the registration first to identify the corresponding event
     const registration = await prisma.registration.findUnique({
       where: { id }
     });
@@ -32,15 +32,21 @@ export async function DELETE(request, context) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Execute atomic transaction without nested await
     await prisma.$transaction([
       prisma.registration.delete({
         where: { id },
       }),
-      // Decrement the registration count in analytics
-      prisma.eventAnalytic.update({
+      // Decrement the registration count in analytics safely
+      prisma.eventAnalytic.upsert({
         where: { id: `analytic-${eventId}` },
-        data: {
+        update: {
           registrations: { decrement: 1 }
+        },
+        create: {
+          id: `analytic-${eventId}`,
+          eventId: eventId,
+          registrations: 0
         }
       })
     ]);

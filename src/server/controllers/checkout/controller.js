@@ -1,170 +1,92 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/server/db/prisma";
-import Razorpay from "razorpay";
+import { prisma } from "../../db/prisma";
 
 export async function POST(req) {
   try {
-    // 1. Verify environment variables exist before running initialization
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      return NextResponse.json(
-        { error: "Razorpay credentials missing in environment variables." },
-        { status: 500 }
-      );
-    }
-
-    // 2. Safely initialize Razorpay instance per request
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
-
-    // 3. Parse and validate incoming payload data safely
+    // 1. Parse and validate incoming payload data
     const body = await req.json().catch(() => null);
     if (!body) {
-      return NextResponse.json(
-        { error: "Invalid JSON payload" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
     }
 
     const { eventId, userId } = body;
     if (!eventId || !userId) {
-      return NextResponse.json(
-        { error: "Missing required fields: eventId or userId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields: eventId or userId" }, { status: 400 });
     }
 
-    // 4. Resolve database userId if an email string was provided by the client session context
+    // 2. Resolve database userId if an email string was provided
     let resolvedUserId = userId;
     if (userId.includes("@")) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: userId },
-      });
+      const dbUser = await prisma.user.findUnique({ where: { email: userId } });
       if (!dbUser) {
-        return NextResponse.json(
-          { error: "Authenticated user record not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Authenticated user record not found" }, { status: 404 });
       }
       resolvedUserId = dbUser.id;
     }
 
-    // 5. Execute isolated database verification checks inside a transaction block
-    const transactionResult = await prisma.$transaction(async (tx) => {
-      // Find the explicit event targeted by the user
-      const event = await tx.event.findUnique({
+    // 3. Database transaction for event availability and duplicate checks
+    const event = await prisma.$transaction(async (tx) => {
+      const dbEvent = await tx.event.findUnique({
         where: { id: eventId },
         include: {
           _count: {
-            select: { registrations: { where: { status: "Confirmed" } } },
-          },
-        },
+            select: { registrations: { where: { status: "Confirmed" } } }
+          }
+        }
       });
 
-      if (!event) {
+      if (!dbEvent) {
         throw new Error("EVENT_NOT_FOUND");
       }
 
-      // Safeguard against overlapping event registrations
       const existingReg = await tx.registration.findUnique({
         where: {
           userId_eventId: {
             userId: resolvedUserId,
-            eventId: event.id,
-          },
-        },
+            eventId: dbEvent.id
+          }
+        }
       });
 
       if (existingReg && existingReg.status === "Confirmed") {
         throw new Error("ALREADY_REGISTERED");
       }
 
-      // Production capacity gate validation
-      if (event.capacity && event._count.registrations >= event.capacity) {
+      if (dbEvent.capacity && dbEvent._count.registrations >= dbEvent.capacity) {
         throw new Error("EVENT_FULL");
       }
 
-      return event;
+      return dbEvent;
     });
 
-    const event = transactionResult;
-
-    // 6. Handle Free vs Paid registration flows cleanly
-    if (event.ticketType === "Free" || event.price === 0) {
-      // Direct write registration for free tickets bypassing payment infrastructure
-      const registration = await prisma.registration.create({
-        data: {
-          userId: resolvedUserId,
-          eventId: event.id,
-          status: "Confirmed",
-        },
-      });
-
-      return NextResponse.json(
-        {
-          success: true,
-          isFree: true,
-          message: "Successfully registered for free event",
-          registrationId: registration.id,
-        },
-        { status: 201 }
-      );
-    }
-
-    // 7. Generate a legitimate, verifiable Razorpay order object
-    const amountInPaise = Math.round(event.price * 100);
-
-    const razorpayOrderOptions = {
-      amount: amountInPaise,
-      currency: "INR",
-      receipt: `receipt_ev_${event.id.substring(0, 10)}_${Date.now().toString().slice(-6)}`,
-      notes: {
-        eventId: event.id,
+    // 4. Bypassed Payment Flow: Force direct confirmation for all events
+    const registration = await prisma.registration.create({
+      data: {
         userId: resolvedUserId,
-      },
-    };
-
-    const order = await razorpay.orders.create(razorpayOrderOptions);
-
-    // 8. Return standard client execution context
-    return NextResponse.json(
-      {
-        success: true,
-        isFree: false,
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
         eventId: event.id,
-      },
-      { status: 200 }
-    );
+        status: "Confirmed",
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      isFree: true,
+      message: "Registration successful!",
+      registrationId: registration.id
+    }, { status: 201 });
+
   } catch (error) {
-    // Intercept expected transaction validation faults to send clear status codes
     if (error.message === "EVENT_NOT_FOUND") {
-      return NextResponse.json(
-        { error: "The requested event does not exist" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "The requested event does not exist" }, { status: 404 });
     }
     if (error.message === "ALREADY_REGISTERED") {
-      return NextResponse.json(
-        { error: "You are already registered for this event" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "You are already registered for this event" }, { status: 400 });
     }
     if (error.message === "EVENT_FULL") {
-      return NextResponse.json(
-        { error: "Registration failed. Event capacity is fully booked" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "Registration failed. Event capacity is fully booked" }, { status: 409 });
     }
 
-    // Capture unhandled anomalies cleanly without exposing backend paths
-    console.error("[CRITICAL] Production Checkout Error Log:", error);
-    return NextResponse.json(
-      { error: "An unexpected payment error occurred" },
-      { status: 500 }
-    );
+    console.error("[CHECKOUT ERROR]:", error);
+    return NextResponse.json({ error: "An unexpected registration error occurred" }, { status: 500 });
   }
 }
