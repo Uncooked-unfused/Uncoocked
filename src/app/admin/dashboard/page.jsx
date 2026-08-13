@@ -70,8 +70,8 @@ export default function AdminDashboardPage() {
     { title: "Action Needed", value: stats.needsInfoCount ?? 0, desc: "Info requested from host", href: "/admin/applications?status=NEEDS_MORE_INFORMATION", icon: AlertCircle, color: "text-purple-400 border-purple-500/20" },
     { title: "Approved Hosts", value: stats.approvedCount ?? 0, desc: "Eligible to host events", href: "/admin/applications?status=APPROVED", icon: CheckCircle2, color: "text-emerald-400 border-emerald-500/20" },
     { title: "Rejected Apps", value: stats.rejectedCount ?? 0, desc: "Not approved requests", href: "/admin/applications?status=REJECTED", icon: XCircle, color: "text-red-400 border-red-500/20" },
-    { title: "Active Events", value: stats.activeEvents ?? 0, desc: "Live published events", href: "/event", icon: Calendar, color: "text-cyan-400 border-cyan-500/20" },
-    { title: "Upcoming Events", value: stats.upcomingEvents ?? 0, desc: "Scheduled future events", href: "/event", icon: Sparkles, color: "text-pink-400 border-pink-500/20" },
+    { title: "Active Events", value: stats.activeEvents ?? 0, desc: "Live published events", href: "/admin/events?status=ACTIVE", icon: Calendar, color: "text-cyan-400 border-cyan-500/20" },
+    { title: "Upcoming Events", value: stats.upcomingEvents ?? 0, desc: "Scheduled future events", href: "/admin/events", icon: Sparkles, color: "text-pink-400 border-pink-500/20" },
   ];
 
   return (
@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
             <Users className="w-3.5 h-3.5 text-blue-400" /> Manage Users
           </Link>
           <Link
-            href="/event"
+            href="/admin/events"
             className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
           >
             <Calendar className="w-3.5 h-3.5 text-pink-400" /> View Events

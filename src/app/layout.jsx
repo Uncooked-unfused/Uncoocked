@@ -1,7 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import AppShell from "@/components/layout/AppShell";
 import { UserProvider } from "@/context/UserContext";
 import { NextAuthProvider } from "@/context/NextAuthProvider";
 import SessionMonitor from "@/components/dashboard/SessionMonitor";
@@ -36,9 +35,7 @@ export default function RootLayout({ children }) {
         <NextAuthProvider>
           <UserProvider>
             <SessionMonitor />
-            <Navbar />
-            <main className="flex-1 w-full flex flex-col pt-20">{children}</main>
-            <Footer />
+            <AppShell>{children}</AppShell>
           </UserProvider>
         </NextAuthProvider>
         <Toaster theme="dark" position="bottom-right" richColors />

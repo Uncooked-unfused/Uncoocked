@@ -62,8 +62,16 @@ export default function SessionMonitor() {
 
   if (!warningType || status !== "authenticated") return null;
 
-  // Don't show toast on public pages
-  if (pathname === "/login" || pathname === "/signup" || pathname === "/") return null;
+  // Don't show toast on public pages or for Super Admins on admin routes
+  if (
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/" ||
+    pathname.startsWith("/admin") ||
+    session?.user?.role === "SUPER_ADMIN"
+  ) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] bg-[#111111] border border-white/10 shadow-2xl rounded-xl p-4 min-w-[300px] flex flex-col gap-3">

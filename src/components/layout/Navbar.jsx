@@ -37,8 +37,11 @@ export default function Navbar() {
     { name: "Events", href: "/event" },
     { name: "Opportunities", href: "/opportunities" },
     { name: "Host an Event", href: "/host/apply" },
-    { name: "Dashboard", href: "/dashboard" },
   ];
+
+  if (pathname.startsWith("/admin") || session?.user?.role === "SUPER_ADMIN") {
+    return null;
+  }
 
   return (
     <div className="fixed top-3 left-0 right-0 z-50 flex justify-center px-4">

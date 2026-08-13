@@ -146,14 +146,9 @@ export default function EventModerationDetailPage({ params }) {
           >
             Status: {event.status}
           </span>
-          <a
-            href={`/event/${event.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="bg-neutral-800 hover:bg-neutral-700 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
-          >
-            Public Event Page <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          <span className="bg-neutral-800 text-gray-400 font-mono text-[11px] px-3 py-1.5 rounded-lg border border-neutral-700">
+            ID: {event.id}
+          </span>
         </div>
       </div>
 

@@ -9,7 +9,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   const pathname = usePathname();
 
-  if (pathname === "/opportunities") return null;
+  if (pathname === "/opportunities" || pathname.startsWith("/admin")) return null;
 
   return (
     <footer className="w-full bg-[#0A0A0A] border-t border-white/6 py-14">

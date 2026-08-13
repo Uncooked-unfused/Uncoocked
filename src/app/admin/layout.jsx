@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useEffect } from "react";
+import { LogOut } from "lucide-react";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
@@ -75,9 +76,18 @@ export default function AdminLayout({ children }) {
             </nav>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 shrink-0">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-xs text-gray-400 font-mono">Super Admin Console</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs text-gray-400 font-mono">Super Admin Console</span>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </div>
       </header>
