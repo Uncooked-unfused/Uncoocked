@@ -35,7 +35,6 @@
     "stripe": "^22.3.1"
   },
   "devDependencies": {
-    "@netlify/plugin-nextjs": "^5.15.12",
     "@opengsd/gsd-core": "^1.6.0",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
