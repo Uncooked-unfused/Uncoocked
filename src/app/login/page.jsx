@@ -28,19 +28,17 @@ export default function LoginPage() {
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("expired") === "true";
 
-  // Auto-redirect if already authenticated
-  useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      const callbackUrl = getCallbackUrl();
-      if (session.user.role === "SUPER_ADMIN") {
-        window.location.replace("/admin/dashboard");
-      } else if (callbackUrl) {
-        window.location.replace(callbackUrl);
-      } else {
-        window.location.replace("/dashboard");
-      }
+  // Determine safe redirect
+  const handleGoToDashboard = () => {
+    const callbackUrl = getCallbackUrl();
+    if (session?.user?.role === "SUPER_ADMIN") {
+      router.push("/admin/dashboard");
+    } else if (callbackUrl) {
+      router.push(callbackUrl);
+    } else {
+      router.push("/dashboard");
     }
-  }, [status, session]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,6 +112,25 @@ export default function LoginPage() {
             Welcome back. Enter your credentials to continue.
           </p>
         </div>
+
+        {status === "authenticated" && session?.user && (
+          <div className="bg-neon-purple/10 border border-neon-purple/30 rounded-xl p-4 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-300">Signed in as</span>
+              <span className="text-xs font-bold text-neon-lavender truncate max-w-[180px]">
+                {session.user.email}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleGoToDashboard}
+              className="w-full btn-primary text-xs py-2 font-bold flex items-center justify-center gap-1.5"
+            >
+              <span>Continue to {session.user.role === "SUPER_ADMIN" ? "Admin Console" : "Dashboard"}</span>
+              <span>&rarr;</span>
+            </button>
+          </div>
+        )}
 
         {expired && (
           <p className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">

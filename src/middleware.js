@@ -1,97 +1,72 @@
-import { withAuth } from "next-auth/middleware";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 
-// Edge middleware protecting admin routes, isolating admin role, and guarding protected routes
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth?.token;
-    const path = req.nextUrl.pathname;
+export async function middleware(req) {
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  const path = req.nextUrl.pathname;
 
-    // 1. SUPER_ADMIN Routing Isolation:
-    // When signed in as Super Admin, the admin should ONLY access the Admin Dashboard/Console
-    // and cannot access the consumer-facing website as a normal user.
-    if (token?.role === "SUPER_ADMIN") {
-      // Allow admin pages, admin APIs, auth endpoints, and system telemetry/health
-      if (
-        path.startsWith("/admin") ||
-        path.startsWith("/api/admin") ||
-        path.startsWith("/api/auth") ||
-        path.startsWith("/api/health")
-      ) {
-        return NextResponse.next();
-      }
+  // Extract JWT token securely from request cookies
+  const token = await getToken({
+    req,
+    secret,
+  });
 
-      // Automatically redirect all normal user website pages to the admin dashboard
-      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-    }
-
-    // 2. Super Admin gating for /admin pages and /api/admin endpoints
-    if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
-      if (!token || token.role !== "SUPER_ADMIN") {
-        if (path.startsWith("/api/admin")) {
-          return NextResponse.json(
-            { error: "Forbidden: Super Admin access required." },
-            { status: 403 }
-          );
-        }
-        return NextResponse.redirect(
-          new URL(token ? "/dashboard" : "/login", req.url)
+  // 1. Super Admin gating for /admin pages and /api/admin endpoints
+  if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
+    if (!token || token.role !== "SUPER_ADMIN") {
+      if (path.startsWith("/api/admin")) {
+        return NextResponse.json(
+          { error: "Forbidden: Super Admin access required." },
+          { status: 403 }
         );
       }
-      return NextResponse.next();
-    }
-
-    // 3. Email verification check for creator & host routes
-    if (token && !token.emailVerified) {
-      if (
-        path.startsWith("/dashboard/organizer") ||
-        path.startsWith("/onboarding") ||
-        path.startsWith("/profile") ||
-        path.startsWith("/api/organizer")
-      ) {
-        return NextResponse.redirect(
-          new URL(
-            `/verify-email?notice=unverified&email=${encodeURIComponent(token.email || "")}`,
-            req.url
-          )
-        );
-      }
-    }
-
-    // 3.5. Verified host check for event creation and organizer tools
-    if (path.startsWith("/dashboard/organizer")) {
-      if (token && token.role !== "ORGANIZER" && token.role !== "SUPER_ADMIN") {
-        return NextResponse.redirect(new URL("/host/status", req.url));
-      }
-    }
-
-    // 4. Protected user routes requiring login
-    const isProtectedUserRoute =
-      path.startsWith("/dashboard") ||
-      path.startsWith("/profile") ||
-      path.startsWith("/onboarding") ||
-      path.startsWith("/host");
-
-    if (isProtectedUserRoute && !token) {
       return NextResponse.redirect(
-        new URL(`/login?callbackUrl=${encodeURIComponent(path)}`, req.url)
+        new URL(token ? "/dashboard" : `/login?callbackUrl=${encodeURIComponent(path)}`, req.url)
       );
     }
-
     return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized() {
-        // Return true to allow middleware to handle role and route routing
-        return true;
-      },
-    },
-    pages: {
-      signIn: "/login",
-    },
   }
-);
+
+  // 2. Email verification check for creator & host routes
+  if (token && !token.emailVerified) {
+    if (
+      path.startsWith("/dashboard/organizer") ||
+      path.startsWith("/onboarding") ||
+      path.startsWith("/profile") ||
+      path.startsWith("/api/organizer")
+    ) {
+      return NextResponse.redirect(
+        new URL(
+          `/verify-email?notice=unverified&email=${encodeURIComponent(token.email || "")}`,
+          req.url
+        )
+      );
+    }
+  }
+
+  // 3. Verified host check for event creation and organizer tools
+  if (path.startsWith("/dashboard/organizer")) {
+    if (token && token.role !== "ORGANIZER" && token.role !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/host/status", req.url));
+    }
+  }
+
+  // 4. Protected user routes requiring login
+  const isProtectedUserRoute =
+    path.startsWith("/dashboard") ||
+    path.startsWith("/profile") ||
+    path.startsWith("/onboarding") ||
+    path.startsWith("/host") ||
+    path.startsWith("/requests");
+
+  if (isProtectedUserRoute && !token) {
+    return NextResponse.redirect(
+      new URL(`/login?callbackUrl=${encodeURIComponent(path)}`, req.url)
+    );
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

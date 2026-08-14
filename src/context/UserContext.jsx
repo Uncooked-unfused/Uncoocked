@@ -24,19 +24,19 @@ export function UserProvider({ children }) {
       setUserState(session.user.email);
       setIsLoading(false);
 
-      // If Super Admin is logged in, ensure they stay within the Admin Console
-      if (session.user.role === "SUPER_ADMIN") {
-        if (!pathname.startsWith("/admin")) {
-          router.replace("/admin/dashboard");
-        }
-        return;
-      }
-
       // Check if user recently saved preferences
-      const justCompleted = typeof window !== "undefined" && localStorage.getItem("onboarding_just_completed") === "true";
+      const justCompleted =
+        typeof window !== "undefined" &&
+        localStorage.getItem("onboarding_just_completed") === "true";
 
       // Auto-redirect new users to onboarding ONLY if they haven't just completed it
-      if (session.user.onboardingCompleted === false && pathname !== "/onboarding" && !justCompleted) {
+      if (
+        session.user.onboardingCompleted === false &&
+        session.user.role !== "SUPER_ADMIN" &&
+        pathname !== "/onboarding" &&
+        !pathname.startsWith("/admin") &&
+        !justCompleted
+      ) {
         router.push("/onboarding");
       }
     } else if (status === "unauthenticated") {
