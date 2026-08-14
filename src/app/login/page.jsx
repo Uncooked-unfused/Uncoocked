@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,11 +32,11 @@ export default function LoginPage() {
   const handleGoToDashboard = () => {
     const callbackUrl = getCallbackUrl();
     if (session?.user?.role === "SUPER_ADMIN") {
-      router.push("/admin/dashboard");
+      window.location.href = "/admin/dashboard";
     } else if (callbackUrl) {
-      router.push(callbackUrl);
+      window.location.href = callbackUrl;
     } else {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     }
   };
 
@@ -114,21 +114,30 @@ export default function LoginPage() {
         </div>
 
         {status === "authenticated" && session?.user && (
-          <div className="bg-neon-purple/10 border border-neon-purple/30 rounded-xl p-4 space-y-2.5">
+          <div className="bg-neon-purple/10 border border-neon-purple/30 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-300">Signed in as</span>
               <span className="text-xs font-bold text-neon-lavender truncate max-w-[180px]">
                 {session.user.email}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={handleGoToDashboard}
-              className="w-full btn-primary text-xs py-2 font-bold flex items-center justify-center gap-1.5"
-            >
-              <span>Continue to {session.user.role === "SUPER_ADMIN" ? "Admin Console" : "Dashboard"}</span>
-              <span>&rarr;</span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleGoToDashboard}
+                className="flex-1 btn-primary text-xs py-2 font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Continue to {session.user.role === "SUPER_ADMIN" ? "Admin Console" : "Dashboard"}</span>
+                <span>&rarr;</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="px-3 py-2 text-xs font-medium text-gray-400 hover:text-white bg-black/40 hover:bg-neutral-800 border border-dark-border rounded-lg transition cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         )}
 

@@ -5,11 +5,27 @@ export async function middleware(req) {
   const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
   const path = req.nextUrl.pathname;
 
-  // Extract JWT token securely from request cookies
-  const token = await getToken({
+  // Extract JWT token securely from request cookies with multi-environment fallback
+  let token = await getToken({
     req,
     secret,
   });
+
+  if (!token) {
+    token = await getToken({
+      req,
+      secret,
+      secureCookie: true,
+    });
+  }
+
+  if (!token) {
+    token = await getToken({
+      req,
+      secret,
+      secureCookie: false,
+    });
+  }
 
   // 1. Super Admin gating for /admin pages and /api/admin endpoints
   if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
