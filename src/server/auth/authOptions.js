@@ -18,24 +18,26 @@ export const authOptions = {
         turnstileToken: { label: "Turnstile Token", type: "text" },
       },
       async authorize(credentials, req) {
-        // Per-IP rate limit on credential attempts (10 / minute).
-        const rl = rateLimit(`login:${getClientIp(req)}`, {
-          limit: 10,
-          windowMs: 60 * 1000,
-        });
-        if (!rl.success) {
-          logAuthEvent("login_rate_limited", { ip: getClientIp(req) });
-          return null;
-        }
-
         const email = credentials?.email?.toLowerCase().trim();
         const password = credentials?.password;
         if (!email || !password) return null;
 
+        // Per-IP (or per-account fallback) rate limit on credential attempts (10 / minute).
+        const clientIp = getClientIp(req);
+        const rateKey = clientIp !== "unknown" ? `login:ip:${clientIp}` : `login:email:${email}`;
+        const rl = rateLimit(rateKey, {
+          limit: 10,
+          windowMs: 60 * 1000,
+        });
+        if (!rl.success) {
+          logAuthEvent("login_rate_limited", { ip: clientIp, email });
+          return null;
+        }
+
         if (credentials?.turnstileToken) {
-          const captchaValid = await verifyCaptcha(credentials.turnstileToken, getClientIp(req));
+          const captchaValid = await verifyCaptcha(credentials.turnstileToken, clientIp);
           if (!captchaValid) {
-            logAuthEvent("login_captcha_failed", { ip: getClientIp(req) });
+            logAuthEvent("login_captcha_failed", { ip: clientIp });
             return null;
           }
         }
@@ -115,37 +117,11 @@ export const authOptions = {
     }),
   ],
 
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: false,
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
   session: {
     strategy: "jwt",
     maxAge: 2 * 60 * 60, // 2 hours
-  },
-  cookies: {
-    sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    callbackUrl: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.callback-url"
-          : "next-auth.callback-url",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
