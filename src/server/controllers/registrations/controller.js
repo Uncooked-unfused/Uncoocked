@@ -127,8 +127,8 @@ export async function POST(request) {
       user = await prisma.user.create({
         data: {
           email,
-          name: name || email.split('@')[0],
-          fullName: name || email.split('@')[0],
+          name: name || email?.split('@')?.[0] || "User",
+          fullName: name || email?.split('@')?.[0] || "User",
           department: track,
           clubAssociation: teamName,
         },

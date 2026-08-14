@@ -3,6 +3,7 @@ import "./globals.css";
 import AppShell from "@/components/layout/AppShell";
 import { UserProvider } from "@/context/UserContext";
 import { NextAuthProvider } from "@/context/NextAuthProvider";
+import { NavigationHistoryProvider } from "@/context/NavigationHistoryContext";
 import SessionMonitor from "@/components/dashboard/SessionMonitor";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "sonner";
@@ -33,10 +34,12 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col bg-black text-white transition-colors duration-300">
         <NextAuthProvider>
-          <UserProvider>
-            <SessionMonitor />
-            <AppShell>{children}</AppShell>
-          </UserProvider>
+          <NavigationHistoryProvider>
+            <UserProvider>
+              <SessionMonitor />
+              <AppShell>{children}</AppShell>
+            </UserProvider>
+          </NavigationHistoryProvider>
         </NextAuthProvider>
         <Toaster theme="dark" position="bottom-right" richColors />
         <SpeedInsights />

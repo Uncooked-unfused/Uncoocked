@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import GlobalBackButton from "@/components/layout/GlobalBackButton";
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
@@ -16,6 +17,7 @@ export default function AppShell({ children }) {
       <main className={`flex-1 w-full flex flex-col ${!isAdmin ? "pt-20" : ""}`}>
         {children}
       </main>
+      <GlobalBackButton />
       {!isAdmin && <Footer />}
     </>
   );

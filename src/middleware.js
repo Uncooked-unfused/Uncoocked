@@ -58,6 +58,13 @@ export default withAuth(
       }
     }
 
+    // 3.5. Verified host check for event creation and organizer tools
+    if (path.startsWith("/dashboard/organizer")) {
+      if (token && token.role !== "ORGANIZER" && token.role !== "SUPER_ADMIN") {
+        return NextResponse.redirect(new URL("/host/status", req.url));
+      }
+    }
+
     // 4. Protected user routes requiring login
     const isProtectedUserRoute =
       path.startsWith("/dashboard") ||

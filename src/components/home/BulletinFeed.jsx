@@ -71,20 +71,26 @@ export default function BulletinFeed() {
 
           {/* Scrolling area */}
           <div className="flex-1 relative overflow-y-auto no-scrollbar p-3 space-y-2">
-            {itemsToDisplay.map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-white/3 border border-white/6 rounded-lg px-3 py-2.5 flex items-center justify-between gap-4 hover:bg-white/5 transition-colors duration-150 font-mono text-[11px]"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Terminal className="h-3 w-3 text-white/25 shrink-0" />
-                  <span className="text-white/60 leading-relaxed">{item.text}</span>
-                </div>
-                <span className="text-[10px] text-white/30 shrink-0 font-medium">
-                  {item.time}
-                </span>
+            {itemsToDisplay.length === 0 ? (
+              <div className="text-center py-10 text-[11px] text-white/35 font-mono">
+                No active announcements or broadcast logs right now.
               </div>
-            ))}
+            ) : (
+              itemsToDisplay.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white/3 border border-white/6 rounded-lg px-3 py-2.5 flex items-center justify-between gap-4 hover:bg-white/5 transition-colors duration-150 font-mono text-[11px]"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Terminal className="h-3 w-3 text-white/25 shrink-0" />
+                    <span className="text-white/60 leading-relaxed">{item.text}</span>
+                  </div>
+                  <span className="text-[10px] text-white/30 shrink-0 font-medium">
+                    {item.time}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

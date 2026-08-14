@@ -42,6 +42,7 @@ model User {
   managedEvents   EventManager[]
   hostApplication HostApplication?
   supportTickets  SupportTicket[]
+  communicationRecipients CommunicationRecipient[]
 
   @@index([role])
 }
@@ -390,6 +391,55 @@ model TicketMessage {
   createdAt  DateTime      @default(now())
 
   @@index([ticketId])
+}
+
+model AdminCommunication {
+  id              String   @id @default(cuid())
+  subject         String
+  message         String
+  type            String   @default("NOTIFICATION") // NOTIFICATION | DOCUMENT_REQUEST | MEDIA_REQUEST
+  targetType      String   @default("INDIVIDUAL")   // INDIVIDUAL | GROUP
+  targetGroup     String?  // ALL_USERS | ORGANIZERS | PENDING_HOSTS | VERIFIED_HOSTS | ATTENDEES | CUSTOM
+  requiredDocType String?  // e.g. "Identity Proof", "Event Contract", "Banner Media", "College Authorization"
+  instructions    String?
+  priority        String   @default("NORMAL")       // NORMAL | HIGH | URGENT
+  deadline        DateTime?
+  sentBy          String   // Admin user ID
+  createdAt       DateTime @default(now())
+
+  recipients      CommunicationRecipient[]
+
+  @@index([type])
+  @@index([targetType])
+  @@index([createdAt])
+}
+
+model CommunicationRecipient {
+  id                String             @id @default(cuid())
+  communicationId   String
+  communication     AdminCommunication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email             String
+  status            String             @default("SENT") // SENT | DELIVERED | VIEWED | RESPONDED
+  
+  // User response payload (shown in Admin Panel only)
+  responseNotes     String?
+  documentUrl       String?            // Link to drive/storage/document
+  mediaUrls         String?            // JSON array of media URLs / uploaded files
+  respondedAt       DateTime?
+  adminReviewStatus String             @default("PENDING") // PENDING | REVIEWED | APPROVED | REJECTED | FOLLOW_UP_REQUIRED
+  adminReviewNotes  String?
+  reviewedBy        String?
+  reviewedAt        DateTime?
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([communicationId])
+  @@index([userId])
+  @@index([status])
+  @@index([adminReviewStatus])
 }
 
 

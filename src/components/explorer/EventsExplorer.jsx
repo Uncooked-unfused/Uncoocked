@@ -31,6 +31,26 @@ export default function EventsExplorer({
   // Current time captured in state to keep memo pure
   const [now] = useState(() => Date.now());
 
+  const handleHostClick = async () => {
+    try {
+      const res = await fetch("/api/host/status");
+      if (res.status === 401) {
+        router.push("/login?callbackUrl=/dashboard/organizer/new");
+        return;
+      }
+      const data = await res.json();
+      if (data?.userRole === "SUPER_ADMIN" || data?.userRole === "ORGANIZER" || data?.application?.status === "APPROVED") {
+        router.push("/dashboard/organizer/new");
+      } else if (data?.application) {
+        router.push("/host/status");
+      } else {
+        router.push("/host/apply");
+      }
+    } catch {
+      router.push("/host/status");
+    }
+  };
+
   // Filter and sort events based on search query, category, and zone in real-time
   const filteredEvents = useMemo(() => {
     const list = events.filter((ev) => {
@@ -112,7 +132,6 @@ export default function EventsExplorer({
     <div className="space-y-6">
       {/* Unified Control Strip */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#111111] border border-white/8 rounded-xl p-3 shadow-sm">
-        
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto flex-1">
           {/* Search Bar */}
           <div className="w-full sm:w-80 relative shrink-0">
@@ -147,7 +166,7 @@ export default function EventsExplorer({
         </div>
 
         <div className="flex items-center justify-between gap-3 w-full lg:w-auto border-t lg:border-t-0 border-white/6 pt-3 lg:pt-0">
-          {/* Zone Dropdown */}
+          {/* Zone Selector */}
           <div className="relative shrink-0">
             <select
               value={activeZone}
@@ -155,7 +174,7 @@ export default function EventsExplorer({
               suppressHydrationWarning
               className="appearance-none bg-[#0A0A0A] text-white/60 text-[12px] font-semibold pl-3 pr-8 py-1.5 rounded-md border border-white/10 focus:outline-none focus:border-white/20 hover:bg-white/5 transition-all cursor-pointer"
             >
-              <option value="All">All Zones</option>
+              <option value="All">All Locations</option>
               {LUCKNOW_ZONES.map((zone) => (
                 <option key={zone} value={zone} className="bg-[#111111]">
                   {zone}
@@ -172,12 +191,12 @@ export default function EventsExplorer({
           
           {/* Host Event Button (Secondary) */}
           <button
-    onClick={() => router.push("/dashboard/organizer/new")}
-    className="btn-secondary whitespace-nowrap text-[12px] shrink-0"
-    suppressHydrationWarning={true}
->
-    Host Event
-</button>
+            onClick={handleHostClick}
+            className="btn-secondary whitespace-nowrap text-[12px] shrink-0"
+            suppressHydrationWarning={true}
+          >
+            Host Event
+          </button>
         </div>
       </div>
 
@@ -253,7 +272,7 @@ export default function EventsExplorer({
                   <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-mono">
                     <MapPin className="h-3 w-3 shrink-0" />
                     <span className="truncate max-w-[140px]">
-                      {ev.zone ? ev.zone : ev.location.split(",")[0]}
+                      {ev.zone ? ev.zone : ev.location?.split(",")?.[0] || ev.location || "Campus"}
                     </span>
                   </div>
 

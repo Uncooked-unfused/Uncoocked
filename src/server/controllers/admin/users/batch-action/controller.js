@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
 import { withAdminRateLimit } from "@/server/middleware/rateLimit";
+import { createNotification } from "@/server/services/notificationService";
+import { sendAccountStatusEmail, sendUserRoleUpdatedEmail } from "@/server/services/emailService";
 
 export const POST = withAdminRateLimit(async function POST(request) {
   try {
@@ -54,8 +56,30 @@ export const POST = withAdminRateLimit(async function POST(request) {
               },
             }),
           ]);
+
+          // In-App Notification
+          await createNotification({
+            userId,
+            title: isSuspending ? "Account Suspended" : "Account Reactivated",
+            message: isSuspending
+              ? `Your account access has been suspended by an administrator.${reason ? ` Reason: ${reason}` : " Please contact support for appeals."}`
+              : "Your account access has been restored.",
+            type: "SECURITY",
+          });
+
+          // Transactional Email
+          if (user.email) {
+            sendAccountStatusEmail({
+              email: user.email,
+              name: user.name || user.fullName,
+              isSuspending,
+              reason,
+            }).catch((err) => console.error("Batch status email failed:", err));
+          }
         } else if (action === "SET_ROLE_USER" || action === "SET_ROLE_ORGANIZER") {
           const newRole = action === "SET_ROLE_ORGANIZER" ? "ORGANIZER" : "USER";
+          const previousRole = user.role;
+
           await prisma.$transaction([
             prisma.user.update({
               where: { id: userId },
@@ -66,12 +90,31 @@ export const POST = withAdminRateLimit(async function POST(request) {
                 adminId: admin.id,
                 applicationId: user.hostApplication?.id || null,
                 action: "USER_BULK_ROLE_UPDATED",
-                previousStatus: user.role,
+                previousStatus: previousRole,
                 newStatus: newRole,
                 reason: reason || `Bulk role update to ${newRole}.`,
               },
             }),
           ]);
+
+          // In-App Notification
+          await createNotification({
+            userId,
+            title: "Account Role Updated",
+            message: `Your account role has been updated from ${previousRole} to ${newRole}.${reason ? ` Reason: ${reason}` : ""}`,
+            type: "GOVERNANCE",
+          });
+
+          // Transactional Email
+          if (user.email) {
+            sendUserRoleUpdatedEmail({
+              email: user.email,
+              name: user.name || user.fullName,
+              oldRole: previousRole,
+              newRole,
+              reason,
+            }).catch((err) => console.error("Batch role email failed:", err));
+          }
         }
 
         processed.push(userId);

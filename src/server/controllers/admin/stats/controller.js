@@ -21,6 +21,7 @@ export async function GET(request) {
       pendingWorkItems,
       activeIncidentsCount,
       systemHealth,
+      allReviews,
     ] = await Promise.all([
       prisma.hostApplication.count(),
       prisma.hostApplication.groupBy({
@@ -58,7 +59,14 @@ export async function GET(request) {
         where: { status: { in: ["INVESTIGATING", "IDENTIFIED", "MONITORING"] } },
       }).catch(() => 0),
       getSystemHealthStatus().catch(() => null),
+      prisma.review.findMany({ select: { rating: true } }).catch(() => []),
     ]);
+
+    const totalReviews = allReviews.length;
+    const avgRating =
+      totalReviews > 0
+        ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1)
+        : "0.0";
 
     const statusMap = statusGroups.reduce((acc, curr) => {
       acc[curr.status] = curr._count._all;
@@ -91,6 +99,8 @@ export async function GET(request) {
         activeEvents,
         upcomingEvents,
         completedEvents,
+        totalReviews,
+        avgRating,
         approvalRate,
         rejectionRate,
         verificationQueueSize,

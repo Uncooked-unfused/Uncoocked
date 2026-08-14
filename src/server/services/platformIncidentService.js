@@ -32,15 +32,18 @@ export async function declareIncident(incidentData, adminId) {
       },
     });
 
-    await tx.auditLog.create({
-      data: {
-        adminId,
-        action: "INCIDENT_DECLARED",
-        previousStatus: "NONE",
-        newStatus: severity,
-        reason: `Declared ${severity} incident: ${title}`,
-      },
-    });
+    const auditClient = tx.auditLog || prisma.auditLog;
+    if (auditClient?.create) {
+      await auditClient.create({
+        data: {
+          adminId,
+          action: "INCIDENT_DECLARED",
+          previousStatus: "NONE",
+          newStatus: severity,
+          reason: `Declared ${severity} incident: ${title}`,
+        },
+      });
+    }
 
     return incident;
   });
@@ -62,15 +65,18 @@ export async function updateIncidentStatus(incidentId, status, summary, adminId)
       },
     });
 
-    await tx.auditLog.create({
-      data: {
-        adminId,
-        action: "INCIDENT_STATUS_UPDATED",
-        previousStatus: existing.status,
-        newStatus: status,
-        reason: `Updated incident ${incidentId} to ${status}`,
-      },
-    });
+    const auditClient = tx.auditLog || prisma.auditLog;
+    if (auditClient?.create) {
+      await auditClient.create({
+        data: {
+          adminId,
+          action: "INCIDENT_STATUS_UPDATED",
+          previousStatus: existing.status,
+          newStatus: status,
+          reason: `Updated incident ${incidentId} to ${status}`,
+        },
+      });
+    }
 
     return updated;
   });

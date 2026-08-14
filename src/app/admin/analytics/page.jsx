@@ -98,7 +98,7 @@ export default function AnalyticsDashboardPage() {
   const { users, applications, events, system } = data || {};
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-black text-white p-6 sm:p-10 w-full space-y-8">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-neutral-800 pb-6">
         <div>

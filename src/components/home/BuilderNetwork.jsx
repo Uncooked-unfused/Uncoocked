@@ -1,19 +1,39 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Cpu, Layout, Server, Brain, Palette, Briefcase } from "lucide-react";
+import CountUp from "@/components/ui/CountUp";
 
 export default function BuilderNetwork() {
+  const [studentCount, setStudentCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.stats && isMounted) {
+          setStudentCount(data.stats.students || 0);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const leftNodes = [
-    { name: "CS & Tech",    count: 340, icon: Layout,   color: "text-blue-400/70",   desc: "Computers, Coding, IT" },
-    { name: "Engineering",  count: 290, icon: Server,   color: "text-emerald-400/70",desc: "Mechanical, EEE, Applied" },
-    { name: "Business",     count: 420, icon: Cpu,      color: "text-[#C084FC]/70",  desc: "Finance, Marketing, Econ" },
+    { name: "CS & Tech", icon: Layout, color: "text-blue-400/70", desc: "Software, Web, AI" },
+    { name: "Engineering", icon: Server, color: "text-emerald-400/70", desc: "Electronics, Mechanical" },
+    { name: "Business", icon: Cpu, color: "text-[#C084FC]/70", desc: "Finance & Startups" },
   ];
 
   const rightNodes = [
-    { name: "Liberal Arts",     count: 210, icon: Brain,    color: "text-amber-400/70",  desc: "Humanities, Literature" },
-    { name: "Fine Arts",        count: 180, icon: Palette,  color: "text-pink-400/70",   desc: "Design, Painting, Music" },
-    { name: "Natural Sciences", count: 120, icon: Briefcase,color: "text-cyan-400/70",   desc: "Physics, Chemistry, Bio" },
+    { name: "Liberal Arts", icon: Brain, color: "text-amber-400/70", desc: "Humanities & Media" },
+    { name: "Design & Arts", icon: Palette, color: "text-pink-400/70", desc: "UI/UX, Visual & Audio" },
+    { name: "Sciences", icon: Briefcase, color: "text-cyan-400/70", desc: "Applied Physics, Bio" },
   ];
 
   return (
@@ -37,13 +57,12 @@ export default function BuilderNetwork() {
           {/* Animated connector lines (desktop only) */}
           <div className="absolute inset-0 hidden md:block pointer-events-none -z-10">
             <svg className="w-full h-full" viewBox="0 0 800 400" fill="none">
-              <path id="l1" d="M 180 80 L 400 200"  stroke="rgba(168,85,247,0.12)" strokeWidth="1" strokeDasharray="5 8" />
+              <path id="l1" d="M 180 80 L 400 200" stroke="rgba(168,85,247,0.12)" strokeWidth="1" strokeDasharray="5 8" />
               <path id="l2" d="M 180 200 L 400 200" stroke="rgba(168,85,247,0.12)" strokeWidth="1" strokeDasharray="5 8" />
               <path id="l3" d="M 180 320 L 400 200" stroke="rgba(168,85,247,0.12)" strokeWidth="1" strokeDasharray="5 8" />
-              <path id="l4" d="M 620 80 L 400 200"  stroke="rgba(168,85,247,0.10)" strokeWidth="1" strokeDasharray="5 8" />
+              <path id="l4" d="M 620 80 L 400 200" stroke="rgba(168,85,247,0.10)" strokeWidth="1" strokeDasharray="5 8" />
               <path id="l5" d="M 620 200 L 400 200" stroke="rgba(168,85,247,0.10)" strokeWidth="1" strokeDasharray="5 8" />
               <path id="l6" d="M 620 320 L 400 200" stroke="rgba(168,85,247,0.10)" strokeWidth="1" strokeDasharray="5 8" />
-              <animateTransform attributeName="transform" type="translate" values="0;0" dur="0s" />
             </svg>
             {/* CSS animated dashes */}
             <style>{`
@@ -72,7 +91,7 @@ export default function BuilderNetwork() {
                   </div>
                   <div>
                     <span className="block text-[11px] font-semibold text-white">{node.name}</span>
-                    <span className="text-[10px] text-white/35">{node.count} students</span>
+                    <span className="text-[10px] text-white/35">{node.desc}</span>
                   </div>
                 </motion.div>
               );
@@ -89,7 +108,9 @@ export default function BuilderNetwork() {
               <span className="text-xl">⚡</span>
               <span className="text-[10px] font-bold tracking-widest text-white uppercase mt-1 leading-none">Campus</span>
               <span className="text-[10px] font-bold tracking-widest text-white uppercase leading-none">Students</span>
-              <span className="text-[9px] font-medium text-[#C084FC] mt-1">1,240 CORE</span>
+              <span className="text-[10px] font-mono font-bold text-[#C084FC] mt-1">
+                <CountUp end={studentCount} /> CORE
+              </span>
             </motion.div>
           </div>
 
@@ -111,7 +132,7 @@ export default function BuilderNetwork() {
                   </div>
                   <div>
                     <span className="block text-[11px] font-semibold text-white">{node.name}</span>
-                    <span className="text-[10px] text-white/35">{node.count} students</span>
+                    <span className="text-[10px] text-white/35">{node.desc}</span>
                   </div>
                 </motion.div>
               );

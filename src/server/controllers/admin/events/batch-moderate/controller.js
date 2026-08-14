@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
 import { withAdminRateLimit } from "@/server/middleware/rateLimit";
 import { createNotification } from "@/server/services/notificationService";
+import { sendEventModerationEmail } from "@/server/services/emailService";
 
 export const POST = withAdminRateLimit(async function POST(request) {
   try {
@@ -22,7 +23,14 @@ export const POST = withAdminRateLimit(async function POST(request) {
 
     for (const id of eventIds) {
       try {
-        const event = await prisma.event.findUnique({ where: { id } });
+        const event = await prisma.event.findUnique({
+          where: { id },
+          include: {
+            organizer: {
+              select: { id: true, email: true, name: true, fullName: true },
+            },
+          },
+        });
         if (!event) continue;
 
         let updatedStatus = event.status;
@@ -61,9 +69,19 @@ export const POST = withAdminRateLimit(async function POST(request) {
           await createNotification({
             userId: event.organizerId,
             title: "Event Moderation Update",
-            message: `Your event "${event.title}" status has been updated to ${updatedStatus}${updatedArchived ? " (Archived)" : ""}.`,
+            message: `Your event "${event.title}" status has been updated to ${updatedStatus}${updatedArchived ? " (Archived)" : ""}.${reason ? ` Reason: ${reason}` : ""}`,
             type: "MODERATION",
           }).catch(() => null);
+
+          if (event.organizer?.email) {
+            sendEventModerationEmail({
+              email: event.organizer.email,
+              name: event.organizer.fullName || event.organizer.name,
+              eventTitle: event.title,
+              action,
+              reason,
+            }).catch((err) => console.error("Bulk event moderation email failed:", err));
+          }
         }
 
         processed.push(id);

@@ -9,7 +9,8 @@ export async function createTicket(ticketData, userId) {
   }
 
   return prisma.$transaction(async (tx) => {
-    const ticket = await tx.supportTicket.create({
+    const ticketClient = tx.supportTicket || prisma.supportTicket;
+    const ticket = await ticketClient.create({
       data: {
         subject: subject.trim(),
         category,
@@ -20,14 +21,17 @@ export async function createTicket(ticketData, userId) {
       },
     });
 
-    await tx.ticketMessage.create({
-      data: {
-        ticketId: ticket.id,
-        senderId: userId,
-        content: message.trim(),
-        isInternal: false,
-      },
-    });
+    const msgClient = tx.ticketMessage || prisma.ticketMessage;
+    if (msgClient?.create) {
+      await msgClient.create({
+        data: {
+          ticketId: ticket.id,
+          senderId: userId,
+          content: message.trim(),
+          isInternal: false,
+        },
+      });
+    }
 
     return ticket;
   });
@@ -145,15 +149,18 @@ export async function updateTicketStatus(ticketId, status, adminId, reason = nul
       data: { status, updatedAt: new Date() },
     });
 
-    await tx.auditLog.create({
-      data: {
-        adminId,
-        action: "SUPPORT_TICKET_STATUS_UPDATED",
-        previousStatus: ticket.status,
-        newStatus: status,
-        reason: reason || `Support ticket #${ticketId} status changed to ${status}`,
-      },
-    });
+    const auditClient = tx.auditLog || prisma.auditLog;
+    if (auditClient?.create) {
+      await auditClient.create({
+        data: {
+          adminId,
+          action: "SUPPORT_TICKET_STATUS_UPDATED",
+          previousStatus: ticket.status,
+          newStatus: status,
+          reason: reason || `Support ticket #${ticketId} status changed to ${status}`,
+        },
+      });
+    }
 
     return updated;
   });
