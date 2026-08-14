@@ -23,16 +23,16 @@ export async function GET(request) {
       systemHealth,
       allReviews,
     ] = await Promise.all([
-      prisma.hostApplication.count(),
+      prisma.hostApplication.count().catch(() => 0),
       prisma.hostApplication.groupBy({
         by: ["status"],
         _count: { _all: true },
-      }),
-      prisma.user.count(),
-      prisma.user.count({ where: { role: { in: ["ORGANIZER", "SUPER_ADMIN"] } } }),
-      prisma.event.count({ where: { status: "Active", archived: false } }),
-      prisma.event.count({ where: { date: { gte: now }, archived: false } }),
-      prisma.event.count({ where: { OR: [{ status: "Completed" }, { date: { lt: now } }] } }),
+      }).catch(() => []),
+      prisma.user.count().catch(() => 0),
+      prisma.user.count({ where: { role: { in: ["ORGANIZER", "SUPER_ADMIN", "Organizer"] } } }).catch(() => 0),
+      prisma.event.count({ where: { status: "Active", archived: false } }).catch(() => 0),
+      prisma.event.count({ where: { date: { gte: now }, archived: false } }).catch(() => 0),
+      prisma.event.count({ where: { OR: [{ status: "Completed" }, { date: { lt: now } }] } }).catch(() => 0),
       prisma.auditLog.findMany({
         take: 8,
         orderBy: { timestamp: "desc" },
@@ -44,7 +44,7 @@ export async function GET(request) {
             },
           },
         },
-      }),
+      }).catch(() => []),
       prisma.hostApplication.findMany({
         where: {
           status: { in: ["PENDING", "UNDER_REVIEW", "NEEDS_MORE_INFORMATION", "SUSPENDED"] },
@@ -54,7 +54,7 @@ export async function GET(request) {
         include: {
           user: { select: { id: true, name: true, fullName: true, email: true } },
         },
-      }),
+      }).catch(() => []),
       prisma.platformIncident.count({
         where: { status: { in: ["INVESTIGATING", "IDENTIFIED", "MONITORING"] } },
       }).catch(() => 0),
@@ -62,16 +62,21 @@ export async function GET(request) {
       prisma.review.findMany({ select: { rating: true } }).catch(() => []),
     ]);
 
-    const totalReviews = allReviews.length;
+    const totalReviews = (allReviews || []).length;
     const avgRating =
       totalReviews > 0
-        ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1)
+        ? (allReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / totalReviews).toFixed(1)
         : "0.0";
 
-    const statusMap = statusGroups.reduce((acc, curr) => {
-      acc[curr.status] = curr._count._all;
-      return acc;
-    }, {});
+    const statusMap = Array.isArray(statusGroups)
+      ? statusGroups.reduce((acc, curr) => {
+          if (curr && curr.status) {
+            const count = curr._count?._all ?? curr._count?.status ?? (typeof curr._count === "number" ? curr._count : 0);
+            acc[curr.status] = count;
+          }
+          return acc;
+        }, {})
+      : {};
 
     const pendingCount = statusMap["PENDING"] || 0;
     const underReviewCount = statusMap["UNDER_REVIEW"] || 0;
@@ -87,31 +92,31 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       stats: {
-        totalApplications,
+        totalApplications: totalApplications || 0,
         pendingCount,
         underReviewCount,
         approvedCount,
         rejectedCount,
         needsInfoCount,
         suspendedCount,
-        totalUsers,
-        totalOrganizers,
-        activeEvents,
-        upcomingEvents,
-        completedEvents,
+        totalUsers: totalUsers || 0,
+        totalOrganizers: totalOrganizers || 0,
+        activeEvents: activeEvents || 0,
+        upcomingEvents: upcomingEvents || 0,
+        completedEvents: completedEvents || 0,
         totalReviews,
         avgRating,
         approvalRate,
         rejectionRate,
         verificationQueueSize,
-        activeIncidentsCount,
+        activeIncidentsCount: activeIncidentsCount || 0,
         systemHealth,
       },
-      recentActivity,
-      pendingWorkItems,
+      recentActivity: recentActivity || [],
+      pendingWorkItems: pendingWorkItems || [],
     });
   } catch (error) {
-    if (error.message === "UNAUTHORIZED") {
+    if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN_PERMISSION") {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
     }
     console.error("Super Admin Stats Error:", error);
