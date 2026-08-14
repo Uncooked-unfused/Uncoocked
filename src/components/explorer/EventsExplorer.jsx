@@ -131,29 +131,29 @@ export default function EventsExplorer({
   return (
     <div className="space-y-6">
       {/* Unified Control Strip */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#111111] border border-white/8 rounded-xl p-3 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto flex-1">
+      <div className="w-full bg-[#111111] border border-white/8 rounded-xl p-3 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 min-w-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 min-w-0 w-full">
           {/* Search Bar */}
-          <div className="w-full sm:w-80 relative shrink-0">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+          <div className="w-full sm:w-64 md:w-72 relative shrink-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40 pointer-events-none" />
             <input
               type="text"
               placeholder="Search events, types, keywords..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               suppressHydrationWarning
-              className="w-full bg-[#0A0A0A] border border-white/10 rounded-md text-[12px] font-medium text-white placeholder-white/30 focus:outline-none focus:border-white/20 pl-8 pr-3 py-1.5 transition-all shadow-inner"
+              className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg text-[12px] font-medium text-white placeholder-white/30 focus:outline-none focus:border-white/20 pl-8 pr-3 py-1.5 transition-all shadow-inner"
             />
           </div>
 
           {/* Category Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto sm:border-l sm:border-white/6 sm:pl-3 pt-2 sm:pt-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1 min-w-0 w-full sm:border-l sm:border-white/6 sm:pl-3 py-0.5">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
                 suppressHydrationWarning
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full font-semibold text-[12px] transition-all whitespace-nowrap cursor-pointer ${
+                className={`flex-shrink-0 px-3 py-1 rounded-full font-semibold text-[12px] transition-all whitespace-nowrap cursor-pointer ${
                   activeCategory === category
                     ? "bg-white text-black shadow-sm"
                     : "bg-transparent text-white/50 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10"
@@ -165,14 +165,14 @@ export default function EventsExplorer({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 w-full lg:w-auto border-t lg:border-t-0 border-white/6 pt-3 lg:pt-0">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 border-t lg:border-t-0 border-white/6 pt-2.5 lg:pt-0">
           {/* Zone Selector */}
           <div className="relative shrink-0">
             <select
               value={activeZone}
               onChange={(e) => setActiveZone(e.target.value)}
               suppressHydrationWarning
-              className="appearance-none bg-[#0A0A0A] text-white/60 text-[12px] font-semibold pl-3 pr-8 py-1.5 rounded-md border border-white/10 focus:outline-none focus:border-white/20 hover:bg-white/5 transition-all cursor-pointer"
+              className="appearance-none bg-[#0A0A0A] text-white/60 text-[12px] font-semibold pl-3 pr-8 py-1.5 rounded-lg border border-white/10 focus:outline-none focus:border-white/20 hover:bg-white/5 transition-all cursor-pointer"
             >
               <option value="All">All Locations</option>
               {LUCKNOW_ZONES.map((zone) => (
