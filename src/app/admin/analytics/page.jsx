@@ -95,7 +95,57 @@ export default function AnalyticsDashboardPage() {
     );
   }
 
-  const { users, applications, events, system } = data || {};
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+        <div className="space-y-4 text-center max-w-md bg-neutral-900 border border-neutral-800 p-8 rounded-2xl">
+          <BarChart3 className="w-10 h-10 text-amber-500 mx-auto" />
+          <h2 className="text-lg font-bold text-white">Analytics Unavailable</h2>
+          <p className="text-xs text-gray-400">
+            Unable to load telemetry data. Please verify your Super Admin connection and try again.
+          </p>
+          <button
+            onClick={fetchAnalytics}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-black font-bold text-xs rounded-lg hover:bg-amber-400 transition cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry Loading Analytics</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const users = data.users || {
+    totalUsers: 0,
+    standardUsers: 0,
+    organizers: 0,
+    superAdmins: 0,
+    suspendedUsers: 0,
+  };
+
+  const applications = data.applications || {
+    totalApplications: 0,
+    pendingApps: 0,
+    underReviewApps: 0,
+    approvedApps: 0,
+    rejectedApps: 0,
+    needsInfoApps: 0,
+    suspendedApps: 0,
+    approvalRate: 0,
+    rejectionRate: 0,
+    verificationQueueSize: 0,
+  };
+
+  const events = data.events || {
+    totalEvents: 0,
+    activeEvents: 0,
+    upcomingEvents: 0,
+    completedEvents: 0,
+    archivedEvents: 0,
+    suspendedEvents: 0,
+    totalRegistrations: 0,
+  };
 
   return (
     <div className="min-h-screen bg-black text-white p-6 sm:p-10 w-full space-y-8">

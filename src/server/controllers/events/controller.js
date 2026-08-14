@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/server/db/prisma';
-import { getToken } from 'next-auth/jwt';
+import { getAuthToken } from '@/server/auth/guards';
 import { ACTIVE_CITIES, DEFAULT_CITY, DEFAULT_STATE, DEFAULT_COUNTRY } from '@/config/cities';
 import { getCachedEvents, setCachedEvents, invalidateEventsCache } from '@/server/services/eventsCacheService';
 import { validateAndSanitizeEventData } from '@/server/services/eventSanitizerService';
@@ -88,7 +88,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getAuthToken(request);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized: Please log in first.' }, { status: 401 });
     }

@@ -2,12 +2,12 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/server/db/prisma';
-import { getToken } from 'next-auth/jwt';
+import { getAuthToken } from '@/server/auth/guards';
 
 export async function GET(request) {
   try {
     // 1. SECURITY: Authenticate the requester using NextAuth JWT
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getAuthToken(request);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -88,7 +88,7 @@ export async function POST(request) {
   try {
     const data = await request.json();
     // 3. SECURITY: Authenticate the registration POST creator
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getAuthToken(request);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

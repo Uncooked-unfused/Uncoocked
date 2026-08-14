@@ -8,17 +8,16 @@ import GlobalBackButton from "@/components/layout/GlobalBackButton";
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const isAdmin = pathname.startsWith("/admin") || session?.user?.role === "SUPER_ADMIN";
+  const isAdminRoute = pathname.startsWith("/admin");
 
   return (
     <>
-      {!isAdmin && <Navbar />}
-      <main className={`flex-1 w-full flex flex-col ${!isAdmin ? "pt-20" : ""}`}>
+      {!isAdminRoute && <Navbar />}
+      <main className={`flex-1 w-full flex flex-col ${!isAdminRoute ? "pt-20" : ""}`}>
         {children}
       </main>
       <GlobalBackButton />
-      {!isAdmin && <Footer />}
+      {!isAdminRoute && <Footer />}
     </>
   );
 }

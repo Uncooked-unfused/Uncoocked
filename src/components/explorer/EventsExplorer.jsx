@@ -131,10 +131,10 @@ export default function EventsExplorer({
   return (
     <div className="space-y-6">
       {/* Unified Control Strip */}
-      <div className="w-full bg-[#111111] border border-white/8 rounded-xl p-3 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 min-w-0">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 min-w-0 w-full">
+      <div className="w-full max-w-full bg-[#111111] border border-white/8 rounded-xl p-3 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-3 min-w-0 overflow-hidden box-border">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 min-w-0 max-w-full overflow-hidden">
           {/* Search Bar */}
-          <div className="w-full sm:w-64 md:w-72 relative shrink-0">
+          <div className="w-full sm:w-60 md:w-64 relative shrink-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40 pointer-events-none" />
             <input
               type="text"
@@ -147,7 +147,7 @@ export default function EventsExplorer({
           </div>
 
           {/* Category Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1 min-w-0 w-full sm:border-l sm:border-white/6 sm:pl-3 py-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth flex-1 min-w-0 max-w-full sm:border-l sm:border-white/6 sm:pl-3 py-1">
             {categories.map((category) => (
               <button
                 key={category}
@@ -165,14 +165,14 @@ export default function EventsExplorer({
           </div>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 border-t lg:border-t-0 border-white/6 pt-2.5 lg:pt-0">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 border-t xl:border-t-0 border-white/6 pt-2.5 xl:pt-0 w-full sm:w-auto">
           {/* Zone Selector */}
-          <div className="relative shrink-0">
+          <div className="relative shrink-0 flex-1 sm:flex-none">
             <select
               value={activeZone}
               onChange={(e) => setActiveZone(e.target.value)}
               suppressHydrationWarning
-              className="appearance-none bg-[#0A0A0A] text-white/60 text-[12px] font-semibold pl-3 pr-8 py-1.5 rounded-lg border border-white/10 focus:outline-none focus:border-white/20 hover:bg-white/5 transition-all cursor-pointer"
+              className="w-full sm:w-auto appearance-none bg-[#0A0A0A] text-white/60 text-[12px] font-semibold pl-3 pr-8 py-1.5 rounded-lg border border-white/10 focus:outline-none focus:border-white/20 hover:bg-white/5 transition-all cursor-pointer"
             >
               <option value="All">All Locations</option>
               {LUCKNOW_ZONES.map((zone) => (

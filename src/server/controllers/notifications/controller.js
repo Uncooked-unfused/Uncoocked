@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { getAuthToken } from "@/server/auth/guards";
 import {
   getUserNotifications,
   markNotificationAsRead,
@@ -8,7 +8,7 @@ import {
 
 export async function GET(request) {
   try {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getAuthToken(request);
     if (!token?.sub) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -28,7 +28,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getAuthToken(request);
     if (!token?.sub) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -41,7 +41,7 @@ export default function Navbar() {
     { name: "Host an Event", href: "/host/apply" },
   ];
 
-  if (pathname.startsWith("/admin") || session?.user?.role === "SUPER_ADMIN") {
+  if (pathname.startsWith("/admin")) {
     return null;
   }
 
@@ -160,6 +160,15 @@ export default function Navbar() {
                           </div>
 
                           <div className="flex flex-col gap-0.5 text-[12px]">
+                            {session?.user?.role === "SUPER_ADMIN" && (
+                              <Link
+                                href="/admin/dashboard"
+                                onClick={() => setProfileOpen(false)}
+                                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-amber-400 font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all duration-150"
+                              >
+                                🛡️ Admin Console
+                              </Link>
+                            )}
                             {[
                               { href: "/profile", label: "My Profile" },
                               { href: "/dashboard", label: "Dashboard" },
@@ -263,9 +272,20 @@ export default function Navbar() {
                       </div>
                     </div>
                     <div className="flex flex-col gap-0.5 text-[12px]">
+                      {session?.user?.role === "SUPER_ADMIN" && (
+                        <Link
+                          href="/admin/dashboard"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-amber-400 font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-colors duration-150"
+                        >
+                          🛡️ Admin Console
+                        </Link>
+                      )}
                       {[
                         { href: "/profile", label: "My Profile" },
                         { href: "/dashboard", label: "Dashboard" },
+                        { href: "/host/apply", label: "Host an Event" },
+                        { href: "/host/status", label: "Host Status" },
                         { href: "/opportunities", label: "Opportunities" },
                         { href: "/about", label: "About Uncooked" },
                       ].map(({ href, label }) => (

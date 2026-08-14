@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { getAuthToken } from "@/server/auth/guards";
 import { deleteNotification } from "@/server/services/notificationService";
 
 export async function DELETE(request, { params }) {
   try {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getAuthToken(request);
     if (!token?.sub) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

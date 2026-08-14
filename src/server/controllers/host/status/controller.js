@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { getAuthToken } from "@/server/auth/guards";
 import { prisma } from "@/server/db/prisma";
 import { getHostApplicationByUserId } from "@/server/services/hostVerificationService";
 
 export async function GET(request) {
   try {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getAuthToken(request);
     if (!token?.sub) {
       return NextResponse.json({ error: "Unauthorized: Please log in first." }, { status: 401 });
     }

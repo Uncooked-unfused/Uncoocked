@@ -56,8 +56,8 @@ export function withAdminRateLimit(handler, { limit = 20, windowMs = 60 * 1000 }
     // Dynamic import getAuthToken to avoid circular dependencies if needed
     let userId = null;
     try {
-      const { getToken } = await import("next-auth/jwt");
-      const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+      const { getAuthToken } = await import("@/server/auth/guards");
+      const token = await getAuthToken(request);
       userId = token?.sub;
     } catch (e) {
       // Fallback to IP if token extraction fails

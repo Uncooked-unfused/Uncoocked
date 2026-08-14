@@ -3,7 +3,22 @@ import { prisma } from "@/server/db/prisma";
 
 // Returns the decoded NextAuth JWT for a request, or null if unauthenticated.
 export async function getAuthToken(request) {
-  return getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  if (!request) return null;
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+
+  try {
+    let token = await getToken({ req: request, secret });
+    if (!token) {
+      token = await getToken({ req: request, secret, secureCookie: true });
+    }
+    if (!token) {
+      token = await getToken({ req: request, secret, secureCookie: false });
+    }
+    return token;
+  } catch (err) {
+    console.error("[getAuthToken] Error retrieving token:", err);
+    return null;
+  }
 }
 
 // True if the authenticated user owns/manages the given event
