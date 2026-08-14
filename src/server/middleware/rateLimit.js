@@ -25,11 +25,28 @@ export function rateLimit(key, { limit = 10, windowMs = 60 * 1000 } = {}) {
   };
 }
 
-// Extract the client IP from a NextRequest (or route-handler Request).
+// Extract the client IP from a NextRequest, route-handler Request, or NextAuth req object.
 export function getClientIp(request) {
-  const fwd = request.headers?.get?.("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  return request.headers?.get?.("x-real-ip") || "unknown";
+  if (!request) return "unknown";
+
+  // If request has headers.get (NextRequest / standard Request)
+  if (typeof request.headers?.get === "function") {
+    const fwd = request.headers.get("x-forwarded-for");
+    if (fwd) return fwd.split(",")[0].trim();
+    return request.headers.get("x-real-ip") || "unknown";
+  }
+
+  // If request.headers is a plain object (Node / NextAuth req)
+  if (request.headers && typeof request.headers === "object") {
+    const fwd = request.headers["x-forwarded-for"] || request.headers["X-Forwarded-For"];
+    if (fwd) {
+      return Array.isArray(fwd) ? fwd[0].trim() : String(fwd).split(",")[0].trim();
+    }
+    const realIp = request.headers["x-real-ip"] || request.headers["X-Real-IP"];
+    if (realIp) return Array.isArray(realIp) ? realIp[0].trim() : String(realIp).trim();
+  }
+
+  return request.ip || request.socket?.remoteAddress || "unknown";
 }
 
 // Wrapper for API route controllers to enforce admin rate limiting

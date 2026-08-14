@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getCallbackUrl = () => {
     if (typeof window === "undefined") return null;
@@ -21,48 +28,61 @@ export default function LoginPage() {
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("expired") === "true";
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Auto-redirect if already authenticated
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const callbackUrl = getCallbackUrl();
+      if (session.user.role === "SUPER_ADMIN") {
+        window.location.replace("/admin/dashboard");
+      } else if (callbackUrl) {
+        window.location.replace(callbackUrl);
+      } else {
+        window.location.replace("/dashboard");
+      }
+    }
+  }, [status, session]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const res = await signIn("credentials", {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false,
+      });
 
-    if (res?.error) {
+      if (!res || res.error) {
+        setIsLoading(false);
+        setError("Invalid email or password.");
+        return;
+      }
+
+      // Determine redirect destination
+      const callbackUrl = getCallbackUrl();
+      let destination = callbackUrl || "/dashboard";
+
+      try {
+        const sessionRes = await fetch("/api/auth/session");
+        if (sessionRes.ok) {
+          const sess = await sessionRes.json();
+          if (sess?.user?.role === "SUPER_ADMIN") {
+            destination = "/admin/dashboard";
+          }
+        }
+      } catch {
+        // Fallback to default destination
+      }
+
+      // Hard redirect to ensure HTTP-only cookies are processed cleanly and router state is refreshed
+      window.location.href = destination;
+    } catch (err) {
+      console.error("[Login] Error during sign in:", err);
       setIsLoading(false);
-      setError("Invalid email or password.");
-      return;
+      setError("An unexpected error occurred. Please try again.");
     }
-
-    // Retrieve fresh session to determine user role
-    const session = await getSession();
-
-    setIsLoading(false);
-
-    const callbackUrl = getCallbackUrl();
-
-    if (session?.user?.role === "SUPER_ADMIN") {
-      // Super Admin ALWAYS goes directly to Admin Dashboard
-      router.push("/admin/dashboard");
-    } else if (callbackUrl) {
-      // Respect explicit callback URL for regular users
-      router.push(callbackUrl);
-    } else {
-      // Standard user redirect
-      router.push("/dashboard");
-    }
-
-    router.refresh();
   };
 
   return (
