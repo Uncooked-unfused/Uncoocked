@@ -4,9 +4,7 @@ import { useEffect, useState, useCallback, use } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  ShieldCheck,
   Building2,
-  Globe,
   FileText,
   Clock,
   CheckCircle2,
@@ -18,9 +16,11 @@ import {
   UserCheck,
 } from "lucide-react";
 import DocumentViewerModal from "@/components/admin/DocumentViewerModal";
+import { useBackNavigation } from "@/context/NavigationHistoryContext";
 
 export default function ApplicationDetailPage({ params }) {
   const { id } = use(params);
+  const { goBack } = useBackNavigation();
 
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,13 +138,17 @@ export default function ApplicationDetailPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-black text-white p-6 sm:p-10 w-full space-y-8">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-neutral-800 pb-6">
         <div className="space-y-1">
-          <Link href="/admin/applications" className="text-xs text-gray-400 hover:text-white flex items-center gap-1 mb-2">
+          <button
+            type="button"
+            onClick={() => goBack("/admin/applications")}
+            className="text-xs text-gray-400 hover:text-white flex items-center gap-1 mb-2 cursor-pointer transition-colors"
+          >
             <ArrowLeft className="w-3.5 h-3.5" /> Applications Queue
-          </Link>
+          </button>
           <h1 className="text-3xl font-black">{app.organizationName}</h1>
           <p className="text-xs text-gray-400">
             Applicant: <strong className="text-white">{app.user?.fullName || app.user?.name || "N/A"}</strong> (

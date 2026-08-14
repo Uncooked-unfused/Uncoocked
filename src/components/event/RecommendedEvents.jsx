@@ -152,7 +152,7 @@ export default function RecommendedEvents({ userEmail, onSelectEvent }) {
                 </div>
                 <div className="flex items-center gap-1 truncate">
                   <MapPin className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{ev.location.split(',')[0]}</span>
+                  <span className="truncate">{ev.location?.split(',')?.[0] || ev.location || "Campus"}</span>
                 </div>
               </div>
             </div>

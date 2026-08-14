@@ -6,21 +6,18 @@ import { toast } from "sonner";
 import {
   ShieldCheck,
   Calendar,
-  MapPin,
-  Ticket,
   Users,
   Clock,
   ArrowLeft,
-  ExternalLink,
   Archive,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
-  FileText,
 } from "lucide-react";
+import { useBackNavigation } from "@/context/NavigationHistoryContext";
 
 export default function EventModerationDetailPage({ params }) {
   const { id } = use(params);
+  const { goBack } = useBackNavigation();
 
   const [event, setEvent] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -113,13 +110,17 @@ export default function EventModerationDetailPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-black text-white p-6 sm:p-10 w-full space-y-8">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-neutral-800 pb-6">
         <div className="space-y-1">
-          <Link href="/admin/events" className="text-xs text-gray-400 hover:text-white flex items-center gap-1 mb-2">
+          <button
+            type="button"
+            onClick={() => goBack("/admin/events")}
+            className="text-xs text-gray-400 hover:text-white flex items-center gap-1 mb-2 cursor-pointer transition-colors"
+          >
             <ArrowLeft className="w-3.5 h-3.5" /> Event Moderation Queue
-          </Link>
+          </button>
           <h1 className="text-3xl font-black flex items-center gap-2">
             {event.title}
             {event.archived && (
@@ -146,14 +147,9 @@ export default function EventModerationDetailPage({ params }) {
           >
             Status: {event.status}
           </span>
-          <a
-            href={`/event/${event.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="bg-neutral-800 hover:bg-neutral-700 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
-          >
-            Public Event Page <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          <span className="bg-neutral-800 text-gray-400 font-mono text-[11px] px-3 py-1.5 rounded-lg border border-neutral-700">
+            ID: {event.id}
+          </span>
         </div>
       </div>
 

@@ -7,7 +7,8 @@ import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Bell } from "lucide-react";
+import { Bell, ArrowLeft } from "lucide-react";
+import { useBackNavigation } from "@/context/NavigationHistoryContext";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -16,6 +17,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useUser();
   const { data: session } = useSession();
+  const { goBack } = useBackNavigation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -37,16 +39,30 @@ export default function Navbar() {
     { name: "Events", href: "/event" },
     { name: "Opportunities", href: "/opportunities" },
     { name: "Host an Event", href: "/host/apply" },
-    { name: "Dashboard", href: "/dashboard" },
   ];
+
+  if (pathname.startsWith("/admin") || session?.user?.role === "SUPER_ADMIN") {
+    return null;
+  }
 
   return (
     <div className="fixed top-3 left-0 right-0 z-50 flex justify-center px-4">
       <header className="w-full max-w-5xl rounded-full border border-white/10 bg-black/70 backdrop-blur-md shadow-lg transition-all duration-200">
         <div className="px-4 sm:px-6">
           <div className="flex h-10 items-center justify-between gap-4">
-            {/* Logo */}
-            <div className="flex-shrink-0">
+            {/* Logo and Back Button */}
+            <div className="flex-shrink-0 flex items-center gap-1.5">
+              {pathname !== "/" && (
+                <button
+                  type="button"
+                  onClick={() => goBack()}
+                  aria-label="Back to last page"
+                  title="Back to previous page"
+                  className="p-1 -ml-1 sm:-ml-2 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                </button>
+              )}
               <Link href="/" className="flex items-center gap-2.5 group">
                 <Image
                   src="/logo.png"
@@ -108,10 +124,10 @@ export default function Navbar() {
                       className="flex items-center gap-2 rounded-full bg-white/5 border border-white/10 py-1 pl-1.5 pr-3 hover:border-white/20 hover:bg-white/8 transition-all duration-150 cursor-pointer focus:outline-none"
                     >
                       <div className="w-5 h-5 rounded-full bg-[#1a1a1a] border border-white/15 text-[9px] font-bold text-white/80 flex items-center justify-center uppercase">
-                        {(session?.user?.name || user).substring(0, 2)}
+                        {(session?.user?.name || (typeof user === "string" ? user : "")).substring(0, 2) || "U"}
                       </div>
                       <span className="text-[11px] text-white/70 font-medium leading-none truncate max-w-[90px]">
-                        {session?.user?.name || user.split("@")[0]}
+                        {session?.user?.name || (typeof user === "string" ? user.split("@")[0] : "User")}
                       </span>
                       <svg
                         className={`h-3 w-3 text-white/40 transition-transform duration-150 ${profileOpen ? "rotate-180" : ""}`}

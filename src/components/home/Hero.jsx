@@ -8,33 +8,30 @@ import CountUp from "@/components/ui/CountUp";
 
 export default function Hero() {
   const [stats, setStats] = useState({
-    eventsCount: 6,
-    registrationsCount: 450,
-    activeStudents: 120,
-    clubsCount: 15,
+    eventsCount: 0,
+    registrationsCount: 0,
+    activeStudents: 0,
+    clubsCount: 0,
   });
 
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/events")
+    fetch("/api/stats")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.events) && isMounted) {
-          const count = data.events.length;
-          let regTotal = 0;
-          data.events.forEach((e) => {
-            regTotal += (e._count?.registrations || 0) + (e.capacity ? Math.floor(e.capacity * 0.4) : 25);
-          });
+        if (data.success && data.stats && isMounted) {
           setStats({
-            eventsCount: Math.max(count, 1),
-            registrationsCount: Math.max(regTotal, 50),
-            activeStudents: Math.max(Math.floor(regTotal * 0.6), 20),
-            clubsCount: Math.max(Math.floor(count * 1.5), 5),
+            eventsCount: data.stats.activeEvents ?? 0,
+            registrationsCount: data.stats.registrations ?? 0,
+            activeStudents: data.stats.students ?? 0,
+            clubsCount: data.stats.clubs ?? 0,
           });
         }
       })
       .catch(() => {});
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -117,21 +114,21 @@ export default function Hero() {
             >
               <div>
                 <span className="block text-white font-bold text-lg tracking-tight">
-                  <CountUp end={stats.registrationsCount} suffix="+" />
+                  <CountUp end={stats.registrationsCount} />
                 </span>
                 Registrations
               </div>
               <div className="w-px bg-white/8 self-stretch" />
               <div>
                 <span className="block text-white font-bold text-lg tracking-tight">
-                  <CountUp end={stats.activeStudents} suffix="+" />
+                  <CountUp end={stats.activeStudents} />
                 </span>
                 Students Active
               </div>
               <div className="w-px bg-white/8 self-stretch" />
               <div>
                 <span className="block text-white font-bold text-lg tracking-tight">
-                  <CountUp end={stats.eventsCount} suffix="+" />
+                  <CountUp end={stats.eventsCount} />
                 </span>
                 Campus Events
               </div>

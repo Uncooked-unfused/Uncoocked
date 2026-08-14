@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
 import { createNotification } from "@/server/services/notificationService";
+import { sendUserRoleUpdatedEmail } from "@/server/services/emailService";
 
 export async function POST(request, { params }) {
   try {
@@ -39,27 +40,41 @@ export async function POST(request, { params }) {
         data: { role: newRole },
       });
 
-      await tx.auditLog.create({
-        data: {
-          adminId: admin.id,
-          applicationId: targetUser.hostApplication?.id || null,
-          action: "USER_ROLE_UPDATED",
-          previousStatus: previousRole,
-          newStatus: newRole,
-          reason: reason || `User role updated from ${previousRole} to ${newRole}`,
-        },
-      });
+      const auditClient = tx.auditLog || prisma.auditLog;
+      if (auditClient?.create) {
+        await auditClient.create({
+          data: {
+            adminId: admin.id,
+            applicationId: targetUser.hostApplication?.id || null,
+            action: "USER_ROLE_UPDATED",
+            previousStatus: previousRole,
+            newStatus: newRole,
+            reason: reason || `User role updated from ${previousRole} to ${newRole}`,
+          },
+        });
+      }
 
       return user;
     });
 
-    // Automatic Notification Trigger
+    // In-App Notification
     await createNotification({
       userId: id,
       title: "Account Role Updated",
-      message: `Your account role has been updated from ${previousRole} to ${newRole}.`,
+      message: `Your account role has been updated from ${previousRole} to ${newRole}.${reason ? ` Reason: ${reason}` : ""}`,
       type: "GOVERNANCE",
     });
+
+    // Transactional Email
+    if (targetUser.email) {
+      sendUserRoleUpdatedEmail({
+        email: targetUser.email,
+        name: targetUser.name || targetUser.fullName,
+        oldRole: previousRole,
+        newRole,
+        reason,
+      }).catch((err) => console.error("Role update email failed:", err));
+    }
 
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error) {

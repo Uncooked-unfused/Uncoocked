@@ -51,12 +51,12 @@ export default function LoginPage() {
 
     const callbackUrl = getCallbackUrl();
 
-    if (callbackUrl) {
-      // Respect explicit callback URL if present
-      router.push(callbackUrl);
-    } else if (session?.user?.role === "SUPER_ADMIN") {
-      // Admin redirect
+    if (session?.user?.role === "SUPER_ADMIN") {
+      // Super Admin ALWAYS goes directly to Admin Dashboard
       router.push("/admin/dashboard");
+    } else if (callbackUrl) {
+      // Respect explicit callback URL for regular users
+      router.push(callbackUrl);
     } else {
       // Standard user redirect
       router.push("/dashboard");

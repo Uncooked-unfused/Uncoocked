@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
 import { createNotification } from "@/server/services/notificationService";
+import { sendAccountStatusEmail } from "@/server/services/emailService";
 
 export async function POST(request, { params }) {
   try {
@@ -44,29 +45,42 @@ export async function POST(request, { params }) {
         });
       }
 
-      await tx.auditLog.create({
-        data: {
-          adminId: admin.id,
-          applicationId: targetUser.hostApplication?.id || null,
-          action: isSuspending ? "USER_ACCOUNT_SUSPENDED" : "USER_ACCOUNT_REACTIVATED",
-          previousStatus: targetUser.lockedUntil ? "SUSPENDED" : "ACTIVE",
-          newStatus: isSuspending ? "SUSPENDED" : "ACTIVE",
-          reason: reason || `User account ${action.toLowerCase()}d by admin.`,
-        },
-      });
+      const auditClient = tx.auditLog || prisma.auditLog;
+      if (auditClient?.create) {
+        await auditClient.create({
+          data: {
+            adminId: admin.id,
+            applicationId: targetUser.hostApplication?.id || null,
+            action: isSuspending ? "USER_ACCOUNT_SUSPENDED" : "USER_ACCOUNT_REACTIVATED",
+            previousStatus: targetUser.lockedUntil ? "SUSPENDED" : "ACTIVE",
+            newStatus: isSuspending ? "SUSPENDED" : "ACTIVE",
+            reason: reason || `User account ${action.toLowerCase()}d by admin.`,
+          },
+        });
+      }
 
       return user;
     });
 
-    // Automatic Notification Trigger
+    // In-App Notification
     await createNotification({
       userId: id,
       title: isSuspending ? "Account Suspended" : "Account Reactivated",
       message: isSuspending
-        ? "Your account access has been suspended by an administrator. Please contact support for appeals."
-        : "Your account access has been restored.",
+        ? `Your account access has been suspended by an administrator.${reason ? ` Reason: ${reason}` : " Please contact support for appeals."}`
+        : "Your account access has been restored. You may now use all platform features normally.",
       type: "SECURITY",
     });
+
+    // Transactional Email
+    if (targetUser.email) {
+      sendAccountStatusEmail({
+        email: targetUser.email,
+        name: targetUser.name || targetUser.fullName,
+        isSuspending,
+        reason,
+      }).catch((err) => console.error("Account status email failed:", err));
+    }
 
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
 import { createNotification } from "@/server/services/notificationService";
+import { sendEventModerationEmail } from "@/server/services/emailService";
 
 export async function POST(request, { params }) {
   try {
@@ -14,7 +15,15 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Invalid moderation action" }, { status: 400 });
     }
 
-    const event = await prisma.event.findUnique({ where: { id } });
+    const event = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        organizer: {
+          select: { id: true, email: true, name: true, fullName: true },
+        },
+      },
+    });
+
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
@@ -47,27 +56,41 @@ export async function POST(request, { params }) {
         },
       });
 
-      await tx.auditLog.create({
-        data: {
-          adminId: admin.id,
-          action: auditAction,
-          previousStatus: `${event.status} (Archived: ${event.archived})`,
-          newStatus: `${updatedStatus} (Archived: ${updatedArchived})`,
-          reason: reason ? `[Event: ${event.title} (${id})] ${reason}` : `Moderation action ${action} executed for event ${event.title} (${id})`,
-        },
-      });
+      const auditClient = tx.auditLog || prisma.auditLog;
+      if (auditClient?.create) {
+        await auditClient.create({
+          data: {
+            adminId: admin.id,
+            action: auditAction,
+            previousStatus: `${event.status} (Archived: ${event.archived})`,
+            newStatus: `${updatedStatus} (Archived: ${updatedArchived})`,
+            reason: reason ? `[Event: ${event.title} (${id})] ${reason}` : `Moderation action ${action} executed for event ${event.title} (${id})`,
+          },
+        });
+      }
 
       return result;
     });
 
-    // Automatic Notification Trigger to Event Organizer
+    // Automatic In-App Notification Trigger to Event Organizer
     if (event.organizerId) {
       await createNotification({
         userId: event.organizerId,
         title: "Event Moderation Update",
-        message: `Your event "${event.title}" status has been updated to ${updatedStatus}${updatedArchived ? " (Archived)" : ""}.`,
+        message: `Your event "${event.title}" status has been updated to ${updatedStatus}${updatedArchived ? " (Archived)" : ""}.${reason ? ` Reason: ${reason}` : ""}`,
         type: "MODERATION",
       });
+    }
+
+    // Transactional Email to Event Organizer
+    if (event.organizer?.email) {
+      sendEventModerationEmail({
+        email: event.organizer.email,
+        name: event.organizer.fullName || event.organizer.name,
+        eventTitle: event.title,
+        action,
+        reason,
+      }).catch((err) => console.error("Event moderation email failed:", err));
     }
 
     return NextResponse.json({ success: true, data: updatedEvent });

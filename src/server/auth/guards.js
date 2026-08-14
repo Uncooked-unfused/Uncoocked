@@ -38,7 +38,8 @@ export async function requireSuperAdmin(request) {
     select: { id: true, role: true, permissions: true },
   });
 
-  if (!user || user.role !== "SUPER_ADMIN") {
+  const normalizedRole = user?.role?.toUpperCase();
+  if (!user || (normalizedRole !== "SUPER_ADMIN" && normalizedRole !== "ADMIN")) {
     throw new Error("UNAUTHORIZED");
   }
 
@@ -62,7 +63,8 @@ export async function requirePermission(request, requiredPermission) {
     throw new Error("UNAUTHORIZED");
   }
 
-  if (user.role === "SUPER_ADMIN") {
+  const normalizedRole = user.role?.toUpperCase();
+  if (normalizedRole === "SUPER_ADMIN" || normalizedRole === "ADMIN") {
     return user;
   }
 

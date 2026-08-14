@@ -18,6 +18,7 @@ import {
   Activity,
   Megaphone,
   RefreshCw,
+  Star,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -65,17 +66,17 @@ export default function AdminDashboardPage() {
   const kpiCards = [
     { title: "Total Users", value: stats.totalUsers ?? 0, desc: "Registered platform users", href: "/admin/users", icon: Users, color: "text-blue-400 border-blue-500/20" },
     { title: "Active Organizers", value: stats.totalOrganizers ?? 0, desc: "Verified hosts & admins", href: "/admin/applications?status=APPROVED", icon: Building2, color: "text-emerald-400 border-emerald-500/20" },
+    { title: "Platform Reviews", value: `${stats.totalReviews ?? 0} (${stats.avgRating ?? "0.0"}★)`, desc: "Total user reviews & rating", href: "/admin/reviews", icon: Star, color: "text-amber-400 border-amber-500/20" },
     { title: "Pending Applications", value: stats.pendingCount ?? 0, desc: "Awaiting initial review", href: "/admin/applications?status=PENDING", icon: Clock, color: "text-amber-400 border-amber-500/20" },
     { title: "Under Review", value: stats.underReviewCount ?? 0, desc: "Currently being reviewed", href: "/admin/applications?status=UNDER_REVIEW", icon: Activity, color: "text-indigo-400 border-indigo-500/20" },
     { title: "Action Needed", value: stats.needsInfoCount ?? 0, desc: "Info requested from host", href: "/admin/applications?status=NEEDS_MORE_INFORMATION", icon: AlertCircle, color: "text-purple-400 border-purple-500/20" },
     { title: "Approved Hosts", value: stats.approvedCount ?? 0, desc: "Eligible to host events", href: "/admin/applications?status=APPROVED", icon: CheckCircle2, color: "text-emerald-400 border-emerald-500/20" },
     { title: "Rejected Apps", value: stats.rejectedCount ?? 0, desc: "Not approved requests", href: "/admin/applications?status=REJECTED", icon: XCircle, color: "text-red-400 border-red-500/20" },
-    { title: "Active Events", value: stats.activeEvents ?? 0, desc: "Live published events", href: "/event", icon: Calendar, color: "text-cyan-400 border-cyan-500/20" },
-    { title: "Upcoming Events", value: stats.upcomingEvents ?? 0, desc: "Scheduled future events", href: "/event", icon: Sparkles, color: "text-pink-400 border-pink-500/20" },
+    { title: "Active Events", value: stats.activeEvents ?? 0, desc: "Live published events", href: "/admin/events?status=ACTIVE", icon: Calendar, color: "text-cyan-400 border-cyan-500/20" },
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-black text-white p-6 sm:p-10 w-full space-y-8">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-neutral-800 pb-6">
         <div>
@@ -105,6 +106,12 @@ export default function AdminDashboardPage() {
             <Building2 className="w-3.5 h-3.5" /> Review Applications
           </Link>
           <Link
+            href="/admin/reviews"
+            className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
+          >
+            <Star className="w-3.5 h-3.5 text-amber-400" /> Manage Reviews
+          </Link>
+          <Link
             href="/admin/audit-logs"
             className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
           >
@@ -117,17 +124,11 @@ export default function AdminDashboardPage() {
             <Users className="w-3.5 h-3.5 text-blue-400" /> Manage Users
           </Link>
           <Link
-            href="/event"
+            href="/admin/events"
             className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
           >
             <Calendar className="w-3.5 h-3.5 text-pink-400" /> View Events
           </Link>
-          <button
-            disabled
-            className="bg-neutral-950 text-gray-600 font-bold text-xs px-3 py-2 rounded-lg border border-neutral-900 cursor-not-allowed flex items-center gap-1.5"
-          >
-            <Megaphone className="w-3.5 h-3.5" /> Announcement (Soon)
-          </button>
         </div>
       </div>
 

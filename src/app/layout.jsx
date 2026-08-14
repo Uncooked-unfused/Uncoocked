@@ -1,9 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import AppShell from "@/components/layout/AppShell";
 import { UserProvider } from "@/context/UserContext";
 import { NextAuthProvider } from "@/context/NextAuthProvider";
+import { NavigationHistoryProvider } from "@/context/NavigationHistoryContext";
 import SessionMonitor from "@/components/dashboard/SessionMonitor";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "sonner";
@@ -34,12 +34,12 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col bg-black text-white transition-colors duration-300">
         <NextAuthProvider>
-          <UserProvider>
-            <SessionMonitor />
-            <Navbar />
-            <main className="flex-1 w-full flex flex-col pt-20">{children}</main>
-            <Footer />
-          </UserProvider>
+          <NavigationHistoryProvider>
+            <UserProvider>
+              <SessionMonitor />
+              <AppShell>{children}</AppShell>
+            </UserProvider>
+          </NavigationHistoryProvider>
         </NextAuthProvider>
         <Toaster theme="dark" position="bottom-right" richColors />
         <SpeedInsights />

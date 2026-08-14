@@ -82,7 +82,7 @@ export default function ProfilePage() {
         if (profileData.success && profileData.user) {
           const dbUser = profileData.user;
           if (isMounted) {
-            setFullName(dbUser.fullName || dbUser.name || user.split("@")[0]);
+            setFullName(dbUser.fullName || dbUser.name || (typeof user === "string" ? user.split("@")[0] : ""));
             setBio(dbUser.bio || "");
             setGithub(dbUser.portfolioUrl || dbUser.github || "");
             setTrack(dbUser.department || dbUser.track || "Computer Science & Tech");
@@ -99,7 +99,7 @@ export default function ProfilePage() {
             }
           }
         } else {
-          if (isMounted) setFullName(user.split("@")[0]);
+          if (isMounted) setFullName(typeof user === "string" ? user.split("@")[0] : "");
         }
 
         // Calculate attending count via API
@@ -208,7 +208,7 @@ export default function ProfilePage() {
     );
   }
 
-  const initials = fullName ? fullName.substring(0, 2) : user.substring(0, 2);
+  const initials = fullName ? fullName.substring(0, 2) : (typeof user === "string" ? user.substring(0, 2) : "U");
 
   return (
     <div className="relative isolate overflow-hidden bg-black w-full min-h-[85vh] py-12 sm:py-16">
@@ -260,7 +260,7 @@ export default function ProfilePage() {
 
                 <div className="space-y-1 text-center w-full">
                   <h2 className="text-lg font-black text-white leading-normal truncate w-full px-2">
-                    {fullName || user.split("@")[0]}
+                    {fullName || (typeof user === "string" ? user.split("@")[0] : "User")}
                   </h2>
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 font-mono">
                     <Mail className="h-3.5 w-3.5 text-neon-purple" />

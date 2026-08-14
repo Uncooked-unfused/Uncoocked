@@ -3,7 +3,7 @@ import { prisma } from "@/server/db/prisma";
 
 export async function GET() {
   try {
-    const [studentsCount, activeEventsCount, registrationsCount, clubsGroup] = await Promise.all([
+    const [studentsCount, activeEventsCount, registrationsCount, clubsGroup, approvedOrgs, departmentGroup] = await Promise.all([
       prisma.user.count(),
       prisma.event.count({ where: { status: "Active", archived: false } }),
       prisma.registration.count(),
@@ -11,9 +11,21 @@ export async function GET() {
         by: ["clubAssociation"],
         where: { clubAssociation: { not: null } },
       }),
+      prisma.hostApplication.findMany({
+        where: { status: { in: ["APPROVED", "PENDING"] } },
+        select: { organizationName: true },
+      }),
+      prisma.user.groupBy({
+        by: ["department"],
+        _count: { department: true },
+        where: { department: { not: null } },
+      }),
     ]);
 
-    const clubsCount = clubsGroup.filter((g) => g.clubAssociation?.trim()).length;
+    const clubNames = new Set([
+      ...clubsGroup.map((g) => g.clubAssociation?.trim()).filter(Boolean),
+      ...approvedOrgs.map((o) => o.organizationName?.trim()).filter(Boolean),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -21,7 +33,11 @@ export async function GET() {
         students: studentsCount,
         activeEvents: activeEventsCount,
         registrations: registrationsCount,
-        clubs: clubsCount,
+        clubs: clubNames.size,
+        departments: departmentGroup.map((d) => ({
+          name: d.department,
+          count: d._count.department,
+        })),
       },
     });
   } catch (error) {

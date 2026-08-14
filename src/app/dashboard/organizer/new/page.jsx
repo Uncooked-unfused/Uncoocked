@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import { CITY_ZONES } from "@/config/cities";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import ImageCropper from "@/components/ui/ImageCropper";
 import { toast } from "sonner";
+import { useBackNavigation } from "@/context/NavigationHistoryContext";
 
 const BANNER_PRESETS = [
   {
@@ -35,10 +35,12 @@ const BANNER_PRESETS = [
 function HostEventForm() {
   const { user, isLoading } = useUser();
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
   const isEditing = !!editId;
 
+  const [checkingHost, setCheckingHost] = useState(true);
   const [loadingEvent, setLoadingEvent] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,13 +61,45 @@ function HostEventForm() {
   );
   const [customZone, setCustomZone] = useState("");
 
+  // Enforce host verification guard
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) {
+      router.push("/login?callbackUrl=/dashboard/organizer/new");
+      return;
+    }
+
+    const verifyHostStatus = async () => {
+      try {
+        const res = await fetch("/api/host/status");
+        if (res.status === 401) {
+          router.push("/login?callbackUrl=/dashboard/organizer/new");
+          return;
+        }
+        const data = await res.json();
+        const isVerified =
+          data.userRole === "SUPER_ADMIN" ||
+          (data.userRole === "ORGANIZER" && data.application?.status === "APPROVED");
+
+        if (!isVerified) {
+          toast.error("Host verification is required before you can create events.");
+          router.replace("/host/status");
+          return;
+        }
+        setCheckingHost(false);
+      } catch (err) {
+        console.error("Host verification check failed:", err);
+        router.replace("/host/status");
+      }
+    };
+
+    verifyHostStatus();
+  }, [isLoading, user, router]);
+
   useEffect(() => {
     if (isEditing) {
       const fetchEvent = async () => {
         try {
-          // You could fetch from an endpoint that returns a specific event
-          // For now, let's just fetch all and find it, since /api/events/[eventId] might just be PUT/DELETE. 
-          // Wait, /api/events returns all events. Let's do that.
           const res = await fetch("/api/events");
           const data = await res.json();
           if (data.success) {
@@ -108,12 +142,6 @@ function HostEventForm() {
       fetchEvent();
     }
   }, [isEditing, editId]);
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login?callbackUrl=/dashboard/organizer/new");
-    }
-  }, [isLoading, user, router]);
 
   const handleHostNewEvent = async (e) => {
     e.preventDefault();
@@ -172,7 +200,7 @@ function HostEventForm() {
     }
   };
 
-  if (isLoading || (!user && !loadingEvent)) {
+  if (isLoading || checkingHost || (!user && !loadingEvent)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4">
         <div className="w-8 h-8 border-4 border-neon-purple border-t-transparent rounded-full animate-spin"></div>
@@ -192,9 +220,13 @@ function HostEventForm() {
     <div className="min-h-screen bg-black py-12">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-12 space-y-8 animate-fadeIn">
         
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-neon-purple transition-all group w-fit">
+        <button
+          type="button"
+          onClick={() => goBack("/dashboard")}
+          className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-neon-purple transition-all group w-fit cursor-pointer"
+        >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
-        </Link>
+        </button>
 
         <div className="bg-dark-card border border-dark-border p-8 rounded-2xl shadow-neon space-y-8">
           <div className="space-y-2">

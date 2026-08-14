@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const [hostedEvents, setHostedEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hostInfo, setHostInfo] = useState(null);
 
   // Modal State
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
@@ -119,6 +120,22 @@ export default function DashboardPage() {
           })));
         }
 
+        // 3. Fetch user's host verification status
+        const hostRes = await fetch("/api/host/status");
+        if (hostRes.ok) {
+          const hostData = await hostRes.json();
+          const isVerified =
+            hostData.userRole === "SUPER_ADMIN" ||
+            (hostData.userRole === "ORGANIZER" && hostData.application?.status === "APPROVED");
+          setHostInfo({
+            isVerified,
+            hasApplication: hostData.hasApplication,
+            status: hostData.application?.status || null,
+            application: hostData.application,
+            userRole: hostData.userRole,
+          });
+        }
+
       } catch (err) {
         console.error("Dashboard Load Error:", err);
       } finally {
@@ -155,8 +172,27 @@ export default function DashboardPage() {
     }
   };
 
-  const handleOpenHostModal = () => {
-    router.push("/dashboard/organizer/new");
+  const handleOpenHostModal = async () => {
+    try {
+      const res = await fetch("/api/host/status");
+      const data = await res.json();
+      if (res.status === 401) {
+        router.push("/login?callbackUrl=/dashboard/organizer/new");
+        return;
+      }
+      const isVerified =
+        data.userRole === "SUPER_ADMIN" ||
+        (data.userRole === "ORGANIZER" && data.application?.status === "APPROVED");
+
+      if (isVerified) {
+        router.push("/dashboard/organizer/new");
+      } else {
+        toast.info("Host verification is required to publish events.");
+        router.push("/host/status");
+      }
+    } catch {
+      router.push("/host/status");
+    }
   };
 
   const handleCompleteEvent = async (eventId) => {
@@ -343,7 +379,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Users className="h-3 w-3 text-white/25 shrink-0" />
-                      <span className="truncate">Organizer: {ev.organizer?.name || ev.organizer?.email.split('@')[0] || ev.organizerId}</span>
+                      <span className="truncate">Organizer: {ev.organizer?.name || ev.organizer?.email?.split('@')?.[0] || ev.organizerId || "Campus Host"}</span>
                     </div>
                   </div>
                 </div>
@@ -478,6 +514,33 @@ export default function DashboardPage() {
               </button>
             </div>
 
+            {/* Host Verification Status Banner */}
+            {hostInfo && !hostInfo.isVerified && (
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-bold text-amber-400">Host Verification Required</span>
+                    {hostInfo.hasApplication && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                        {hostInfo.status?.replace(/_/g, " ")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-white/50">
+                    {hostInfo.hasApplication
+                      ? "Your host verification application is currently active. View details or check required updates."
+                      : "You need to be a verified host to publish and manage campus events."}
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push(hostInfo.hasApplication ? "/host/status" : "/host/apply")}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-bold rounded-lg shrink-0 transition"
+                >
+                  {hostInfo.hasApplication ? "View Status" : "Apply to Host"}
+                </button>
+              </div>
+            )}
+
             {activeHostedEvents.length === 0 ? (
               <div className="bg-[#111111]/40 border border-white/6 border-dashed rounded-xl p-10 text-center space-y-4">
                 <span className="text-3xl block">📣</span>
@@ -488,7 +551,8 @@ export default function DashboardPage() {
                   onClick={handleOpenHostModal}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#A855F7] text-white text-[12px] font-semibold rounded-lg hover:bg-[#C084FC] transition-colors duration-150"
                 >
-                  Create First Event <Plus className="h-3.5 w-3.5" />
+                  {hostInfo && !hostInfo.isVerified ? "Complete Host Verification" : "Create First Event"}{" "}
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (

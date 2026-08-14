@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db/prisma";
+import { sendHostApplicationUpdateEmail } from "@/server/services/emailService";
 
 export const HOST_APPLICATION_STATUS = {
   PENDING: "PENDING",
@@ -11,12 +12,12 @@ export const HOST_APPLICATION_STATUS = {
 
 // State transition rules: Map of current status -> allowed next statuses
 const VALID_TRANSITIONS = {
-  PENDING: ["UNDER_REVIEW", "APPROVED", "REJECTED", "NEEDS_MORE_INFORMATION"],
-  UNDER_REVIEW: ["APPROVED", "REJECTED", "NEEDS_MORE_INFORMATION"],
-  NEEDS_MORE_INFORMATION: ["PENDING", "UNDER_REVIEW", "REJECTED"],
-  APPROVED: ["SUSPENDED"],
-  SUSPENDED: ["APPROVED"],
-  REJECTED: ["PENDING"], // Rejected applicants may submit a new application
+  PENDING: ["PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "NEEDS_MORE_INFORMATION"],
+  UNDER_REVIEW: ["PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "NEEDS_MORE_INFORMATION"],
+  NEEDS_MORE_INFORMATION: ["PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "NEEDS_MORE_INFORMATION"],
+  APPROVED: ["APPROVED", "SUSPENDED", "UNDER_REVIEW", "REJECTED", "NEEDS_MORE_INFORMATION"],
+  SUSPENDED: ["SUSPENDED", "APPROVED", "REJECTED", "UNDER_REVIEW", "NEEDS_MORE_INFORMATION"],
+  REJECTED: ["REJECTED", "PENDING", "UNDER_REVIEW", "APPROVED", "NEEDS_MORE_INFORMATION"],
 };
 
 /**
@@ -50,9 +51,24 @@ export async function isUserEligibleToHost(userId) {
 export async function createHostApplication(userId, applicationData) {
   if (!userId) throw new Error("User ID is required");
 
-  const { organizationName, organizationType } = applicationData;
-  if (!organizationName?.trim() || !organizationType?.trim()) {
-    throw new Error("Organization name and organization type are required");
+  const { organizationName, organizationType, organizationEmail, address, description, documentUrls, website } = applicationData;
+  if (!organizationName?.trim()) {
+    throw new Error("Organization name is required");
+  }
+  if (!organizationType?.trim()) {
+    throw new Error("Organization type is required");
+  }
+  if (!organizationEmail?.trim()) {
+    throw new Error("Official organization email is required");
+  }
+  if (!address?.trim()) {
+    throw new Error("Campus location / physical address is required");
+  }
+  if (!description?.trim()) {
+    throw new Error("Organization overview description is required");
+  }
+  if (!documentUrls || (typeof documentUrls === "object" && !documentUrls.idProofUrl && Object.keys(documentUrls).length === 0)) {
+    throw new Error("Identity proof / authorization document link is required");
   }
 
   const existingApp = await prisma.hostApplication.findUnique({
@@ -79,29 +95,30 @@ export async function createHostApplication(userId, applicationData) {
           data: {
             organizationName: organizationName.trim(),
             organizationType: organizationType.trim(),
-            organizationEmail: applicationData.organizationEmail?.trim() || null,
-            website: applicationData.website?.trim() || null,
-            address: applicationData.address?.trim() || null,
-            description: applicationData.description?.trim() || null,
-            documentUrls: applicationData.documentUrls
-              ? JSON.stringify(applicationData.documentUrls)
-              : existingApp.documentUrls,
+            organizationEmail: organizationEmail.trim(),
+            website: website?.trim() || null,
+            address: address.trim(),
+            description: description.trim(),
+            documentUrls: typeof documentUrls === "string" ? documentUrls : JSON.stringify(documentUrls),
             status: HOST_APPLICATION_STATUS.PENDING,
             rejectionReason: null,
             infoRequestedReason: null,
           },
         });
 
-        await tx.auditLog.create({
-          data: {
-            action: "APPLICATION_RESUBMITTED",
-            applicationId: existingApp.id,
-            adminId: userId,
-            previousStatus: existingApp.status,
-            newStatus: HOST_APPLICATION_STATUS.PENDING,
-            reason: "User resubmitted updated host application",
-          },
-        });
+        const auditClient = tx.auditLog || prisma.auditLog;
+        if (auditClient?.create) {
+          await auditClient.create({
+            data: {
+              action: "APPLICATION_RESUBMITTED",
+              applicationId: existingApp.id,
+              adminId: userId,
+              previousStatus: existingApp.status,
+              newStatus: HOST_APPLICATION_STATUS.PENDING,
+              reason: "User resubmitted updated host application",
+            },
+          });
+        }
 
         return updated;
       });
@@ -114,25 +131,28 @@ export async function createHostApplication(userId, applicationData) {
         userId,
         organizationName: organizationName.trim(),
         organizationType: organizationType.trim(),
-        organizationEmail: applicationData.organizationEmail?.trim() || null,
-        website: applicationData.website?.trim() || null,
-        address: applicationData.address?.trim() || null,
-        description: applicationData.description?.trim() || null,
-        documentUrls: applicationData.documentUrls ? JSON.stringify(applicationData.documentUrls) : null,
+        organizationEmail: organizationEmail.trim(),
+        website: website?.trim() || null,
+        address: address.trim(),
+        description: description.trim(),
+        documentUrls: typeof documentUrls === "string" ? documentUrls : JSON.stringify(documentUrls),
         status: HOST_APPLICATION_STATUS.PENDING,
       },
     });
 
-    await tx.auditLog.create({
-      data: {
-        action: "APPLICATION_SUBMITTED",
-        applicationId: created.id,
-        adminId: userId,
-        previousStatus: "UNSUBMITTED",
-        newStatus: HOST_APPLICATION_STATUS.PENDING,
-        reason: "Initial host application submission",
-      },
-    });
+    const auditClient = tx.auditLog || prisma.auditLog;
+    if (auditClient?.create) {
+      await auditClient.create({
+        data: {
+          action: "APPLICATION_SUBMITTED",
+          applicationId: created.id,
+          adminId: userId,
+          previousStatus: "UNSUBMITTED",
+          newStatus: HOST_APPLICATION_STATUS.PENDING,
+          reason: "Initial host application submission",
+        },
+      });
+    }
 
     return created;
   });
@@ -176,7 +196,15 @@ export async function getHostApplicationById(applicationId) {
 export async function processReviewAction(applicationId, adminId, action, notes) {
   const existingApp = await prisma.hostApplication.findUnique({
     where: { id: applicationId },
-    select: { id: true, status: true, userId: true, organizationName: true },
+    select: {
+      id: true,
+      status: true,
+      userId: true,
+      organizationName: true,
+      user: {
+        select: { id: true, email: true, name: true, fullName: true },
+      },
+    },
   });
 
   if (!existingApp) throw new Error("Application not found");
@@ -214,8 +242,8 @@ export async function processReviewAction(applicationId, adminId, action, notes)
   }
 
   // Perform database updates inside transaction
-  return prisma.$transaction(async (tx) => {
-    const updatedApp = await tx.hostApplication.update({
+  const updatedApp = await prisma.$transaction(async (tx) => {
+    const updated = await tx.hostApplication.update({
       where: { id: applicationId },
       data: {
         status: nextStatus,
@@ -232,25 +260,31 @@ export async function processReviewAction(applicationId, adminId, action, notes)
     }
 
     if (notes) {
-      await tx.adminNote.create({
+      const noteClient = tx.adminNote || prisma.adminNote;
+      if (noteClient?.create) {
+        await noteClient.create({
+          data: {
+            applicationId,
+            adminId,
+            note: notes,
+          },
+        });
+      }
+    }
+
+    const auditClient = tx.auditLog || prisma.auditLog;
+    if (auditClient?.create) {
+      await auditClient.create({
         data: {
+          action: `APPLICATION_${action}`,
           applicationId,
           adminId,
-          note: notes,
+          previousStatus: existingApp.status,
+          newStatus: nextStatus,
+          reason: notes || null,
         },
       });
     }
-
-    await tx.auditLog.create({
-      data: {
-        action: `APPLICATION_${action}`,
-        applicationId,
-        adminId,
-        previousStatus: existingApp.status,
-        newStatus: nextStatus,
-        reason: notes || null,
-      },
-    });
 
     let notificationTitle = "";
     let notificationMessage = "";
@@ -274,18 +308,34 @@ export async function processReviewAction(applicationId, adminId, action, notes)
 
     if (notificationTitle && notificationMessage) {
       try {
-        await tx.notification.create({
-          data: {
-            userId: existingApp.userId,
-            title: notificationTitle,
-            message: notificationMessage,
-          },
-        });
+        const notifClient = tx.notification || prisma.notification;
+        if (notifClient?.create) {
+          await notifClient.create({
+            data: {
+              userId: existingApp.userId,
+              title: notificationTitle,
+              message: notificationMessage,
+            },
+          });
+        }
       } catch (err) {
         console.error("Failed to create notification:", err);
       }
     }
 
-    return updatedApp;
+    return updated;
   });
+
+  // Asynchronously dispatch transactional email
+  if (existingApp.user?.email) {
+    sendHostApplicationUpdateEmail({
+      email: existingApp.user.email,
+      name: existingApp.user.fullName || existingApp.user.name,
+      organizationName: existingApp.organizationName,
+      action,
+      notes,
+    }).catch((err) => console.error("Host notification email send failed:", err));
+  }
+
+  return updatedApp;
 }

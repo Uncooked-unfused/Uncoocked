@@ -57,3 +57,32 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "Failed to create announcement" }, { status: 500 });
   }
 }
+
+export async function DELETE(request, { params }) {
+  const { id } = await params;
+  const { searchParams } = new URL(request.url);
+  const announcementId = searchParams.get("announcementId") || searchParams.get("id");
+
+  const token = await getAuthToken(request);
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!(await requireEventManager(id, token))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    if (!announcementId) {
+      return NextResponse.json({ error: "Announcement ID is required" }, { status: 400 });
+    }
+
+    await prisma.bulletinUpdate.deleteMany({
+      where: { id: announcementId, eventId: id }
+    });
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error("Delete Announcement Error:", error);
+    return NextResponse.json({ error: "Failed to delete announcement" }, { status: 500 });
+  }
+}

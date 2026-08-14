@@ -2,11 +2,12 @@
 
 export default function TeamSection() {
   const members = [
-    { name: "Shushant S.", role: "Founder & CEO", avatar: "SS" },
-    { name: "Siddhart B.", role: "Co-Founder", avatar: "SB" },
-    { name: "Sanidhy S.", role: "Chief Product Officer", avatar: "SS" },
-    { name: "Swayam B.", role: "Chief Technology Officer", avatar: "SB" },
-    { name: "Abhay S.", role: "HR Manager", avatar: "AS" },
+    { name: "Shushant Shukla", role: "Founder & CEO", avatar: "SS" },
+    { name: "Siddhart Bhowmik", role: "Co-Founder", avatar: "SB" },
+    { name: "Swayum Bansal", role: "Chief Technology Officer", avatar: "SB" },
+    { name: "Sanidhya Srivastava", role: "Head of Product", avatar: "SS" },
+    { name: "Yogya Chhabra", role: "Marketing Associate", avatar: "YC" },
+    { name: "Shashwat Shukla", role: "Full Stack Developer", avatar: "SS" },
   ];
 
   return (
@@ -23,7 +24,7 @@ export default function TeamSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 max-w-6xl mx-auto">
           {members.map((m, idx) => (
             <div
               key={idx}

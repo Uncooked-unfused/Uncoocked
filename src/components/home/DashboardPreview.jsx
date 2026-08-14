@@ -21,10 +21,7 @@ export default function DashboardPreview() {
     };
   }, []);
 
-  const displayEvents = events.length > 0 ? events : [
-    { title: "Campus Innovation Hackathon 2026", location: "Tech Hub Building", date: "June 20, 2026", status: "Active" },
-    { title: "Generative AI & LLM Workshop", location: "Tech Lab 102", date: "July 2, 2026", status: "Upcoming" },
-  ];
+  const displayEvents = events;
 
   return (
     <section className="py-12 relative w-full border-t border-white/6">
@@ -66,15 +63,21 @@ export default function DashboardPreview() {
                   <Calendar className="h-3 w-3 text-white/30" /> Featured Campus Events
                 </h3>
                 <div className="space-y-2 font-mono text-[11px]">
-                  {displayEvents.map((ev, idx) => (
-                    <div key={ev.id || idx} className="flex items-center justify-between p-3 bg-[#111111] border border-white/6 rounded-lg hover:border-white/12 transition-colors duration-150">
-                      <div>
-                        <span className="block text-[11px] font-semibold text-white/80">{ev.title}</span>
-                        <span className="text-[10px] text-white/30 mt-0.5 block">{ev.location} · {new Date(ev.date).toLocaleDateString()}</span>
-                      </div>
-                      <span className="text-[10px] border px-2 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{ev.status || "Active"}</span>
+                  {displayEvents.length === 0 ? (
+                    <div className="p-4 text-center text-white/30 text-[10px]">
+                      No active campus events listed currently.
                     </div>
-                  ))}
+                  ) : (
+                    displayEvents.map((ev, idx) => (
+                      <div key={ev.id || idx} className="flex items-center justify-between p-3 bg-[#111111] border border-white/6 rounded-lg hover:border-white/12 transition-colors duration-150">
+                        <div>
+                          <span className="block text-[11px] font-semibold text-white/80">{ev.title}</span>
+                          <span className="text-[10px] text-white/30 mt-0.5 block">{ev.location} · {new Date(ev.date).toLocaleDateString()}</span>
+                        </div>
+                        <span className="text-[10px] border px-2 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{ev.status || "Active"}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
