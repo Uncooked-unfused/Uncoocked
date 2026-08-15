@@ -305,3 +305,82 @@ export function mergeWithMockEvents(dbEvents = []) {
   }
   return Array.from(byId.values());
 }
+
+export const mockOpportunities = [
+  {
+    id: "opp-1",
+    title: "Frontend Developer Intern",
+    company: "NeonTech Labs",
+    type: "Internship",
+    location: "Remote",
+    salary: "₹20/hr",
+    description:
+      "Join our core frontend team to build next-gen interactive React and Next.js applications.",
+    tags: ["React", "Next.js", "Tailwind"],
+    requirements: "Experience with React, Next.js, and CSS/Tailwind. Passion for high-quality UI/UX.",
+    applyLink: "",
+    status: "ACTIVE",
+    featured: true,
+  },
+  {
+    id: "opp-2",
+    title: "Smart Contract Bounty",
+    company: "DeFi Protocols",
+    type: "Bounty",
+    location: "Remote",
+    salary: "₹500 - ₹2000",
+    description:
+      "Find and patch vulnerabilities in our new liquidity pool staking contract on Ethereum.",
+    tags: ["Solidity", "Security", "Web3"],
+    requirements: "Proficiency in Solidity, EVM internals, and smart contract audit procedures.",
+    applyLink: "",
+    status: "ACTIVE",
+    featured: true,
+  },
+  {
+    id: "opp-3",
+    title: "Junior Data Scientist",
+    company: "Quantum Analytics",
+    type: "Full-time",
+    location: "New York, NY",
+    salary: "₹80k - ₹100k",
+    description:
+      "Analyze large datasets and train predictive machine learning models for fintech clients.",
+    tags: ["Python", "PyTorch", "SQL"],
+    requirements: "Strong background in statistics, Python data stack (pandas, PyTorch/scikit-learn), and SQL queries.",
+    applyLink: "",
+    status: "ACTIVE",
+    featured: false,
+  },
+  {
+    id: "opp-4",
+    title: "UI/UX Design Freelance",
+    company: "Creative Studios",
+    type: "Freelance",
+    location: "Hybrid",
+    salary: "₹40/hr",
+    description:
+      "Design a high-converting landing page and onboarding flow for a new consumer app.",
+    tags: ["Figma", "Prototyping", "User Research"],
+    requirements: "Strong portfolio showing mobile/web design, Figma components and interactive prototypes.",
+    applyLink: "",
+    status: "ACTIVE",
+    featured: false,
+  },
+  {
+    id: "opp-5",
+    title: "Backend Engineering Intern",
+    company: "CloudScale Inc",
+    type: "Internship",
+    location: "San Francisco, CA",
+    salary: "₹25/hr",
+    description:
+      "Help scale our Go microservices handling millions of concurrent requests daily.",
+    tags: ["Go", "Kubernetes", "AWS"],
+    requirements: "Familiarity with Go, relational databases, REST APIs, and containerization basics.",
+    applyLink: "",
+    status: "ACTIVE",
+    featured: false,
+  },
+];
+

@@ -4,67 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { MapPin, DollarSign, ExternalLink, Search, Loader2 } from "lucide-react";
 import OpportunityApplicationModal from "./OpportunityApplicationModal";
-
-const fallbackOpportunities = [
-  {
-    id: "opp-1",
-    title: "Frontend Developer Intern",
-    company: "NeonTech Labs",
-    type: "Internship",
-    location: "Remote",
-    salary: "₹20/hr",
-    description:
-      "Join our core frontend team to build next-gen interactive React and Next.js applications.",
-    tags: ["React", "Next.js", "Tailwind"],
-  },
-  {
-    id: "opp-2",
-    title: "Smart Contract Bounty",
-    company: "DeFi Protocols",
-    type: "Bounty",
-    location: "Remote",
-    salary: "₹500 - ₹2000",
-    description:
-      "Find and patch vulnerabilities in our new liquidity pool staking contract on Ethereum.",
-    tags: ["Solidity", "Security", "Web3"],
-  },
-  {
-    id: "opp-3",
-    title: "Junior Data Scientist",
-    company: "Quantum Analytics",
-    type: "Full-time",
-    location: "New York, NY",
-    salary: "₹80k - ₹100k",
-    description:
-      "Analyze large datasets and train predictive machine learning models for fintech clients.",
-    tags: ["Python", "PyTorch", "SQL"],
-  },
-  {
-    id: "opp-4",
-    title: "UI/UX Design Freelance",
-    company: "Creative Studios",
-    type: "Freelance",
-    location: "Hybrid",
-    salary: "₹40/hr",
-    description:
-      "Design a high-converting landing page and onboarding flow for a new consumer app.",
-    tags: ["Figma", "Prototyping", "User Research"],
-  },
-  {
-    id: "opp-5",
-    title: "Backend Engineering Intern",
-    company: "CloudScale Inc",
-    type: "Internship",
-    location: "San Francisco, CA",
-    salary: "₹25/hr",
-    description:
-      "Help scale our Go microservices handling millions of concurrent requests daily.",
-    tags: ["Go", "Kubernetes", "AWS"],
-  },
-];
+import { mockOpportunities } from "@/lib/mockData";
 
 export default function OpportunitiesBoard() {
-  const [opportunities, setOpportunities] = useState(fallbackOpportunities);
+  const [opportunities, setOpportunities] = useState(mockOpportunities);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeType, setActiveType] = useState("All");

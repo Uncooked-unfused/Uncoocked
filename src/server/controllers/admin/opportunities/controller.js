@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
+import { mockOpportunities } from "@/lib/mockData";
 
 export const runtime = "nodejs";
 
@@ -8,6 +9,32 @@ export const runtime = "nodejs";
 export async function GET(request) {
   try {
     await requireSuperAdmin(request);
+
+    // Auto-seed sample opportunities if empty so admin has instant access
+    const existingCount = await prisma.opportunity.count();
+    if (existingCount === 0) {
+      for (const mock of mockOpportunities) {
+        await prisma.opportunity.upsert({
+          where: { id: mock.id },
+          update: {},
+          create: {
+            id: mock.id,
+            title: mock.title,
+            company: mock.company,
+            type: mock.type,
+            location: mock.location,
+            salary: mock.salary || null,
+            description: mock.description,
+            tags: JSON.stringify(mock.tags || []),
+            requirements: mock.requirements || null,
+            applyLink: mock.applyLink || null,
+            status: mock.status || "ACTIVE",
+            featured: Boolean(mock.featured),
+            postedBy: "SUPER_ADMIN",
+          },
+        });
+      }
+    }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "ALL";

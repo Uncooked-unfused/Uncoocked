@@ -1,70 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
+import { mockOpportunities } from "@/lib/mockData";
 
 export const runtime = "nodejs";
-
-const DEFAULT_OPPORTUNITIES = [
-  {
-    title: "Frontend Developer Intern",
-    company: "NeonTech Labs",
-    type: "Internship",
-    location: "Remote",
-    salary: "₹20/hr",
-    description:
-      "Join our core frontend team to build next-gen interactive React and Next.js applications.",
-    tags: JSON.stringify(["React", "Next.js", "Tailwind"]),
-    status: "ACTIVE",
-    featured: true,
-  },
-  {
-    title: "Smart Contract Bounty",
-    company: "DeFi Protocols",
-    type: "Bounty",
-    location: "Remote",
-    salary: "₹500 - ₹2000",
-    description:
-      "Find and patch vulnerabilities in our new liquidity pool staking contract on Ethereum.",
-    tags: JSON.stringify(["Solidity", "Security", "Web3"]),
-    status: "ACTIVE",
-    featured: true,
-  },
-  {
-    title: "Junior Data Scientist",
-    company: "Quantum Analytics",
-    type: "Full-time",
-    location: "New York, NY",
-    salary: "₹80k - ₹100k",
-    description:
-      "Analyze large datasets and train predictive machine learning models for fintech clients.",
-    tags: JSON.stringify(["Python", "PyTorch", "SQL"]),
-    status: "ACTIVE",
-    featured: false,
-  },
-  {
-    title: "UI/UX Design Freelance",
-    company: "Creative Studios",
-    type: "Freelance",
-    location: "Hybrid",
-    salary: "₹40/hr",
-    description:
-      "Design a high-converting landing page and onboarding flow for a new consumer app.",
-    tags: JSON.stringify(["Figma", "Prototyping", "User Research"]),
-    status: "ACTIVE",
-    featured: false,
-  },
-  {
-    title: "Backend Engineering Intern",
-    company: "CloudScale Inc",
-    type: "Internship",
-    location: "San Francisco, CA",
-    salary: "₹25/hr",
-    description:
-      "Help scale our Go microservices handling millions of concurrent requests daily.",
-    tags: JSON.stringify(["Go", "Kubernetes", "AWS"]),
-    status: "ACTIVE",
-    featured: false,
-  },
-];
 
 export async function GET(request) {
   try {
@@ -75,9 +13,27 @@ export async function GET(request) {
     // Check if table has records, if not seed default ones
     const count = await prisma.opportunity.count();
     if (count === 0) {
-      await prisma.opportunity.createMany({
-        data: DEFAULT_OPPORTUNITIES,
-      });
+      for (const mock of mockOpportunities) {
+        await prisma.opportunity.upsert({
+          where: { id: mock.id },
+          update: {},
+          create: {
+            id: mock.id,
+            title: mock.title,
+            company: mock.company,
+            type: mock.type,
+            location: mock.location,
+            salary: mock.salary || null,
+            description: mock.description,
+            tags: JSON.stringify(mock.tags || []),
+            requirements: mock.requirements || null,
+            applyLink: mock.applyLink || null,
+            status: mock.status || "ACTIVE",
+            featured: Boolean(mock.featured),
+            postedBy: "SUPER_ADMIN",
+          },
+        });
+      }
     }
 
     const where = {
