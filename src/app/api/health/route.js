@@ -4,7 +4,7 @@ import { getSystemHealthStatus } from "@/server/services/systemMonitoringService
 export async function GET() {
   try {
     const health = await getSystemHealthStatus();
-    const statusCode = health.status === "HEALTHY" ? 200 : 503;
+    const statusCode = health.dbStatus === "DISCONNECTED" || health.status === "UNHEALTHY" ? 503 : 200;
     return NextResponse.json(health, { status: statusCode });
   } catch (error) {
     return NextResponse.json(

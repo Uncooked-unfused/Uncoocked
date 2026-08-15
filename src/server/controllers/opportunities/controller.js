@@ -10,9 +10,28 @@ export async function GET(request) {
     const type = searchParams.get("type");
     const search = searchParams.get("search");
 
-    // Check if table has records, if not seed default ones
-    const count = await prisma.opportunity.count();
-    if (count === 0) {
+    const where = {
+      status: "ACTIVE",
+      ...(type && type !== "All" ? { type } : {}),
+      ...(search
+        ? {
+            OR: [
+              { title: { contains: search, mode: "insensitive" } },
+              { company: { contains: search, mode: "insensitive" } },
+              { description: { contains: search, mode: "insensitive" } },
+              { location: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+
+    let opportunities = await prisma.opportunity.findMany({
+      where,
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    });
+
+    // Auto-seed if completely empty on root fetch
+    if (opportunities.length === 0 && !search && (!type || type === "All")) {
       for (const mock of mockOpportunities) {
         await prisma.opportunity.upsert({
           where: { id: mock.id },
@@ -34,27 +53,11 @@ export async function GET(request) {
           },
         });
       }
+      opportunities = await prisma.opportunity.findMany({
+        where,
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      });
     }
-
-    const where = {
-      status: "ACTIVE",
-      ...(type && type !== "All" ? { type } : {}),
-      ...(search
-        ? {
-            OR: [
-              { title: { contains: search, mode: "insensitive" } },
-              { company: { contains: search, mode: "insensitive" } },
-              { description: { contains: search, mode: "insensitive" } },
-              { location: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    };
-
-    const opportunities = await prisma.opportunity.findMany({
-      where,
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    });
 
     const parsedOpportunities = opportunities.map((opp) => {
       let tags = [];
@@ -69,10 +72,17 @@ export async function GET(request) {
       };
     });
 
-    return NextResponse.json({
-      success: true,
-      data: parsedOpportunities,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: parsedOpportunities,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=15, stale-while-revalidate=45",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch opportunities:", error);
     return NextResponse.json(

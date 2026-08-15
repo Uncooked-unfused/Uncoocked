@@ -60,7 +60,7 @@ export async function getSystemHealthStatus() {
   const p95LatencyMs = calculateP95Latency();
   const errorRatePct = totalRequests > 0 ? Math.round((errorRequests / totalRequests) * 10000) / 100 : 0;
 
-  const isHealthy = dbLatencyMs >= 0 && dbLatencyMs < 500 && memory.heapUsagePct < 90 && errorRatePct < 5;
+  const isHealthy = dbLatencyMs >= 0 && dbLatencyMs < 1000 && memory.heapUsagePct < 90 && errorRatePct < 5;
 
   cachedHealth = {
     status: isHealthy ? "HEALTHY" : "DEGRADED",
