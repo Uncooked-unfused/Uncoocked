@@ -13,6 +13,7 @@ import {
   Building2,
   ArrowRight,
   RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 
 export default function HostStatusPage() {
@@ -42,7 +43,6 @@ export default function HostStatusPage() {
   }, [router]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount/deps-change
     fetchStatus();
   }, [fetchStatus]);
 
@@ -82,6 +82,17 @@ export default function HostStatusPage() {
   const app = data.application;
   const status = app.status;
 
+  // Safely extract identity proof URL from documentUrls string or object
+  let parsedIdProofUrl = "";
+  if (app.documentUrls) {
+    try {
+      const docs = typeof app.documentUrls === "string" ? JSON.parse(app.documentUrls) : app.documentUrls;
+      parsedIdProofUrl = docs.idProofUrl || (typeof docs === "string" ? docs : "");
+    } catch {
+      parsedIdProofUrl = typeof app.documentUrls === "string" ? app.documentUrls : "";
+    }
+  }
+
   const getStatusBadge = () => {
     switch (status) {
       case "APPROVED":
@@ -115,7 +126,7 @@ export default function HostStatusPage() {
         <div>{getStatusBadge()}</div>
       </div>
 
-      {/* Status Banner Callout */}
+      {/* Status Banners */}
       {status === "APPROVED" && (
         <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="space-y-1">
@@ -147,7 +158,7 @@ export default function HostStatusPage() {
           </div>
           <button
             onClick={fetchStatus}
-            className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-2 border border-neutral-700"
+            className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-2 border border-neutral-700 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Refresh Status
           </button>
@@ -244,6 +255,19 @@ export default function HostStatusPage() {
               <div className="pt-2 border-t border-neutral-800/60 text-xs space-y-1">
                 <span className="text-gray-500 block text-[10px] uppercase font-semibold">Description</span>
                 <p className="text-gray-300 leading-relaxed">{app.description}</p>
+              </div>
+            )}
+            {parsedIdProofUrl && (
+              <div className="pt-2 border-t border-neutral-800/60 text-xs">
+                <span className="text-gray-500 block text-[10px] uppercase font-semibold">Identity Proof Link</span>
+                <a
+                  href={parsedIdProofUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-amber-400 underline hover:text-amber-300 font-mono truncate inline-flex items-center gap-1 mt-0.5"
+                >
+                  {parsedIdProofUrl} <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             )}
           </div>

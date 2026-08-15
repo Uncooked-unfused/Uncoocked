@@ -7,7 +7,10 @@ export async function GET(request) {
   try {
     const token = await getAuthToken(request);
     if (!token?.sub) {
-      return NextResponse.json({ error: "Unauthorized: Please log in first." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized: Please log in first." },
+        { status: 401 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -29,6 +32,9 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("GET Host Status Error:", error);
-    return NextResponse.json({ error: "Failed to fetch host verification status" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch host verification status" },
+      { status: 500 }
+    );
   }
 }

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
+  --background: #0D0E12;
   --foreground: #F8F8F8;
 }
 
@@ -11,37 +11,40 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* --- Neutral-first palette --- */
-  --color-surface-0: #000000;      /* page background */
-  --color-surface-1: #0A0A0A;      /* section backgrounds */
-  --color-surface-2: #111111;      /* cards */
-  --color-surface-3: #1A1A1A;      /* elevated cards / inputs */
-  --color-border:    rgba(255,255,255,0.08);
-  --color-border-hover: rgba(255,255,255,0.16);
+  /* --- High-Energy Event Discovery Palette --- */
+  --color-surface-0: #0D0E12;      /* Rich Deep Navy Black background */
+  --color-surface-1: #12141C;      /* Section background */
+  --color-surface-2: #161822;      /* Glass/Card surface */
+  --color-surface-3: #1E2130;      /* Inputs / Elevated cards */
+  --color-border:        rgba(255, 255, 255, 0.1);
+  --color-border-hover:  rgba(255, 46, 147, 0.4);
 
-  /* --- Accent (10% usage) --- */
-  --color-accent:        #A855F7;
-  --color-accent-hover:  #C084FC;
-  --color-accent-subtle: rgba(168,85,247,0.08);
-  --color-accent-border: rgba(168,85,247,0.25);
+  /* --- Event Vibrancy Accents --- */
+  --color-accent:        #FF2E93;  /* Electric Pink */
+  --color-accent-hover:  #FF5AB0;
+  --color-accent-subtle: rgba(255, 46, 147, 0.12);
+  --color-accent-border: rgba(255, 46, 147, 0.3);
 
-  /* --- Legacy aliases (keeps existing classes working) --- */
-  --color-neon-purple:   #A855F7;
-  --color-neon-lavender: #C084FC;
-  --color-dark-bg:       #000000;
-  --color-dark-card:     #111111;
-  --color-dark-border:   rgba(255,255,255,0.08);
-  --color-dark-hover:    #1A1A1A;
+  --color-brand-pink:   #FF2E93;
+  --color-brand-yellow: #CCFF00;  /* Acid Yellow */
+  --color-brand-cyan:   #00F0FF;  /* Electric Cyan */
 
-  /* --- Elevation shadows (replaces all purple glows) --- */
-  --shadow-xs:  0 1px 2px rgba(0,0,0,0.5);
-  --shadow-sm:  0 2px 8px rgba(0,0,0,0.4);
-  --shadow-md:  0 4px 16px rgba(0,0,0,0.5);
-  --shadow-lg:  0 8px 32px rgba(0,0,0,0.6);
+  /* --- Legacy Aliases (keeps existing components aligned) --- */
+  --color-neon-purple:   #FF2E93;
+  --color-neon-lavender: #CCFF00;
+  --color-dark-bg:       #0D0E12;
+  --color-dark-card:     #161822;
+  --color-dark-border:   rgba(255, 255, 255, 0.1);
+  --color-dark-hover:    #1E2130;
 
-  /* --- Legacy shadow aliases → neutral elevation --- */
-  --shadow-neon:       0 2px 8px rgba(0,0,0,0.4);
-  --shadow-neon-thick: 0 4px 16px rgba(0,0,0,0.5);
+  /* --- Vibrant Event Glow Shadows --- */
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg:  0 8px 32px rgba(0, 0, 0, 0.6);
+
+  --shadow-neon:       0 4px 20px rgba(255, 46, 147, 0.25);
+  --shadow-neon-thick: 0 6px 24px rgba(255, 46, 147, 0.35);
 
   /* --- Transitions --- */
   --duration-fast:   150ms;
@@ -81,20 +84,21 @@ body {
 .no-scrollbar               { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
-/* ─── Cards ───────────────────────────────────────────────── */
-/* Replaces the old glassmorphism cards with solid premium cards */
+/* ─── Cards (Youthful Glassmorphism) ────────────────────── */
 .card {
-  background: #111111;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  background: rgba(22, 24, 34, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   transition: border-color var(--duration-fast) var(--ease-out),
               box-shadow   var(--duration-fast) var(--ease-out),
               transform    var(--duration-fast) var(--ease-out);
 }
 .card:hover {
-  border-color: rgba(255,255,255,0.16);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  border-color: rgba(255, 46, 147, 0.4);
+  box-shadow: 0 8px 24px rgba(255, 46, 147, 0.18);
   transform: translateY(-2px);
 }
 
@@ -104,22 +108,23 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 20px;
-  background: #A855F7;
-  color: #fff;
+  padding: 10px 22px;
+  background: #FF2E93;
+  color: #FFFFFF;
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.025em;
   border-radius: 9999px;
   border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(255, 46, 147, 0.3);
   transition: background var(--duration-fast) var(--ease-out),
-              box-shadow  var(--duration-fast) var(--ease-out),
-              transform   var(--duration-fast) var(--ease-out);
+              box-shadow   var(--duration-fast) var(--ease-out),
+              transform    var(--duration-fast) var(--ease-out);
   cursor: pointer;
 }
 .btn-primary:hover {
-  background: #C084FC;
-  box-shadow: 0 4px 16px rgba(168,85,247,0.3);
+  background: #FF5AB0;
+  box-shadow: 0 6px 20px rgba(255, 46, 147, 0.45);
   transform: translateY(-2px);
 }
 .btn-primary:active { transform: translateY(0); }
@@ -129,22 +134,22 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 20px;
-  background: #111111;
-  color: rgba(255,255,255,0.8);
+  padding: 10px 22px;
+  background: #161822;
+  color: #F8F8F8;
   font-weight: 600;
   font-size: 13px;
   letter-spacing: 0.025em;
   border-radius: 9999px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   transition: border-color var(--duration-fast) var(--ease-out),
               background   var(--duration-fast) var(--ease-out),
               transform    var(--duration-fast) var(--ease-out);
   cursor: pointer;
 }
 .btn-secondary:hover {
-  border-color: rgba(255,255,255,0.28);
-  background: #1A1A1A;
+  border-color: rgba(204, 255, 0, 0.5);
+  background: #1E2130;
   transform: translateY(-2px);
 }
 .btn-secondary:active { transform: translateY(0); }
@@ -153,42 +158,41 @@ body {
 .input {
   display: block;
   width: 100%;
-  padding: 8px 12px;
-  background: #111111;
+  padding: 10px 14px;
+  background: #161822;
   color: #F8F8F8;
   font-size: 13px;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   outline: none;
   transition: border-color var(--duration-fast) var(--ease-out),
               box-shadow   var(--duration-fast) var(--ease-out);
 }
-.input::placeholder { color: rgba(255,255,255,0.3); }
+.input::placeholder { color: rgba(255, 255, 255, 0.35); }
 .input:focus {
-  border-color: #A855F7;
-  box-shadow: 0 0 0 3px rgba(168,85,247,0.12);
+  border-color: #FF2E93;
+  box-shadow: 0 0 0 3px rgba(255, 46, 147, 0.2);
 }
 
-/* ─── Section labels ──────────────────────────────────────── */
-/* Replaces the old neon-purple glowing uppercase labels */
+/* ─── Section Labels ──────────────────────────────────────── */
 .section-label {
   display: block;
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
+  color: #CCFF00;
 }
 
-/* ─── Legacy stubs (prevent broken styles from old classes) ── */
-/* These used to have purple glow — now just neutral */
+/* ─── Glow & Accents ──────────────────────────────────────── */
 .neon-glow-border {
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 46, 147, 0.3);
   transition: border-color var(--duration-fast) var(--ease-out);
 }
 .neon-glow-border:hover {
-  border-color: rgba(255,255,255,0.16);
+  border-color: rgba(255, 46, 147, 0.6);
 }
 
-/* No text glow — replaced with clean white text */
-.neon-text-glow { }
+.neon-text-glow {
+  text-shadow: 0 0 12px rgba(255, 46, 147, 0.4);
+}

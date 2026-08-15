@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
   ShieldCheck,
@@ -85,7 +84,7 @@ export default function HostApplicationPage() {
           setDescription(app.description || "");
           if (app.documentUrls) {
             try {
-              const parsed = JSON.parse(app.documentUrls);
+              const parsed = typeof app.documentUrls === "string" ? JSON.parse(app.documentUrls) : app.documentUrls;
               setIdProofUrl(parsed.idProofUrl || app.documentUrls);
             } catch {
               setIdProofUrl(app.documentUrls);
@@ -118,7 +117,6 @@ export default function HostApplicationPage() {
   }, [router]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount/deps-change
     checkInitialStatus();
   }, [checkInitialStatus]);
 
@@ -236,14 +234,14 @@ export default function HostApplicationPage() {
 
       const result = await res.json();
 
-      if (res.ok && result.success) {
+      if (res.ok) {
         if (typeof window !== "undefined") {
           localStorage.removeItem(DRAFT_KEY);
         }
         toast.success("Host application submitted successfully!");
         router.push("/host/status");
       } else {
-        toast.error(result.error || "Failed to submit application");
+        toast.error(result.error || result.message || "Failed to submit application");
       }
     } catch (err) {
       toast.error("Network error. Please try again.");
