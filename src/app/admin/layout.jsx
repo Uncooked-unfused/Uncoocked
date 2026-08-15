@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Shield,
   ArrowLeft,
+  Briefcase,
 } from "lucide-react";
 import { useBackNavigation } from "@/context/NavigationHistoryContext";
 
@@ -42,6 +43,7 @@ export default function AdminLayout({ children }) {
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Applications Queue", href: "/admin/applications", icon: ClipboardList },
     { label: "Communications & Requests", href: "/admin/communications", icon: Mail },
+    { label: "Job Opportunities", href: "/admin/opportunities", icon: Briefcase },
     { label: "Users & Roles", href: "/admin/users", icon: Users },
     { label: "Events Moderation", href: "/admin/events", icon: Calendar },
     { label: "Reviews & Ratings", href: "/admin/reviews", icon: Star },

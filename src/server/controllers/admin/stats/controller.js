@@ -41,6 +41,8 @@ export async function GET(request) {
       activeIncidentsCount,
       systemHealth,
       reviewStats,
+      activeOpportunities,
+      pendingJobApplications,
     ] = await Promise.all([
       prisma.hostApplication.groupBy({
         by: ["status"],
@@ -83,6 +85,8 @@ export async function GET(request) {
         _avg: { rating: true },
         _count: { _all: true },
       }).catch(() => ({ _avg: { rating: 0 }, _count: { _all: 0 } })),
+      prisma.opportunity.count({ where: { status: "ACTIVE" } }).catch(() => 0),
+      prisma.opportunityApplication.count({ where: { status: "PENDING" } }).catch(() => 0),
     ]);
 
     // Parse host application status groups & compute total
@@ -148,6 +152,8 @@ export async function GET(request) {
         rejectionRate,
         verificationQueueSize,
         activeIncidentsCount: activeIncidentsCount || 0,
+        activeOpportunities: activeOpportunities || 0,
+        pendingOpportunityApplications: pendingJobApplications || 0,
         systemHealth,
       },
       recentActivity: recentActivity || [],

@@ -19,6 +19,7 @@ import {
   Megaphone,
   RefreshCw,
   Star,
+  Briefcase,
 } from "lucide-react";
 
 import { getCachedAdminData, fetchWithClientCache } from "@/lib/clientCache";
@@ -80,6 +81,7 @@ export default function AdminDashboardPage() {
     { title: "Approved Hosts", value: stats.approvedCount ?? 0, desc: "Eligible to host events", href: "/admin/applications?status=APPROVED", icon: CheckCircle2, color: "text-emerald-400 border-emerald-500/20" },
     { title: "Rejected Apps", value: stats.rejectedCount ?? 0, desc: "Not approved requests", href: "/admin/applications?status=REJECTED", icon: XCircle, color: "text-red-400 border-red-500/20" },
     { title: "Active Events", value: stats.activeEvents ?? 0, desc: "Live published events", href: "/admin/events?status=ACTIVE", icon: Calendar, color: "text-cyan-400 border-cyan-500/20" },
+    { title: "Job Opportunities", value: `${stats.activeOpportunities ?? 0} Live`, desc: `${stats.pendingOpportunityApplications ?? 0} applications pending`, href: "/admin/opportunities", icon: Briefcase, color: "text-amber-400 border-amber-500/20" },
   ];
 
   return (
@@ -131,6 +133,12 @@ export default function AdminDashboardPage() {
             className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
           >
             <Users className="w-3.5 h-3.5 text-blue-400" /> Manage Users
+          </Link>
+          <Link
+            href="/admin/opportunities"
+            className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg border border-neutral-700 transition flex items-center gap-1.5"
+          >
+            <Briefcase className="w-3.5 h-3.5 text-amber-400" /> Job Opportunities
           </Link>
           <Link
             href="/admin/events"
