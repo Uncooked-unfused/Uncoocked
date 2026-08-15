@@ -7,7 +7,7 @@ export default function TeamSection() {
     { name: "Swayum Bansal", role: "Chief Technology Officer", avatar: "SB" },
     { name: "Sanidhya Srivastava", role: "Head of Product", avatar: "SS" },
     { name: "Yogya Chhabra", role: "Marketing Associate", avatar: "YC" },
-    { name: "Shashwat Shukla", role: "Full Stack Developer", avatar: "SS" },
+    { name: "Shashwat Pathak", role: "Full Stack Developer", avatar: "SP" },
   ];
 
   return (

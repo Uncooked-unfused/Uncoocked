@@ -19,9 +19,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+
 function EventModerationQueueContent() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -46,8 +49,8 @@ function EventModerationQueueContent() {
   }, [search]);
 
   // Fetch Events Queue
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
+  const fetchEvents = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
       const query = new URLSearchParams();
       if (debouncedSearch) query.set("search", debouncedSearch);
@@ -56,21 +59,27 @@ function EventModerationQueueContent() {
       query.set("page", page.toString());
       query.set("limit", "10");
 
-      const res = await fetch(`/api/admin/events?${query.toString()}`);
-      const result = await res.json();
+      const url = `/api/admin/events?${query.toString()}`;
+      const result = await fetchWithClientCache(url, {
+        bypassCache: isManualRefresh,
+        ttl: 15_000,
+      });
 
-      if (res.ok && result.success) {
-        setEvents(result.data || []);
-        if (result.pagination) {
-          setTotalPages(result.pagination.totalPages || 1);
-          setTotalCount(result.pagination.total || 0);
+      if (result.success && result.data) {
+        setEvents(result.data.data || []);
+        if (result.data.pagination) {
+          setTotalPages(result.data.pagination.totalPages || 1);
+          setTotalCount(result.data.pagination.total || 0);
         }
+      } else if (!result.fromCache) {
+        toast.error("Failed to load event moderation queue");
       }
     } catch (err) {
       console.error("Failed to fetch admin events:", err);
       toast.error("Failed to load event moderation queue");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [debouncedSearch, statusFilter, sortBy, page]);
 
@@ -112,10 +121,13 @@ function EventModerationQueueContent() {
 
       if (res.ok && data.success) {
         toast.success(`Successfully moderated ${data.processedCount} events!`);
+        invalidateClientCache("/api/admin/events");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setSelectedIds([]);
         setBatchModal(null);
         setBatchReason("");
-        fetchEvents();
+        fetchEvents(true);
       } else {
         toast.error(`Batch moderation failed: ${data.error || res.statusText}`);
       }
@@ -147,10 +159,12 @@ function EventModerationQueueContent() {
         </div>
 
         <button
-          onClick={fetchEvents}
-          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2"
+          onClick={() => fetchEvents(true)}
+          disabled={isRefreshing}
+          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh Queue
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+          {isRefreshing ? "Refreshing..." : "Refresh Queue"}
         </button>
       </div>
 

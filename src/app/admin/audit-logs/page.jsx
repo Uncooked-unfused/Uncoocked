@@ -16,9 +16,12 @@ import {
   Clock,
 } from "lucide-react";
 
+import { getCachedAdminData, fetchWithClientCache } from "@/lib/clientCache";
+
 function AuditLogsContent() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("ALL");
@@ -35,8 +38,8 @@ function AuditLogsContent() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
+  const fetchLogs = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
       const query = new URLSearchParams();
       if (actionFilter !== "ALL") query.set("action", actionFilter);
@@ -44,21 +47,27 @@ function AuditLogsContent() {
       query.set("page", page.toString());
       query.set("limit", "15");
 
-      const res = await fetch(`/api/admin/audit-logs?${query.toString()}`);
-      const result = await res.json();
+      const url = `/api/admin/audit-logs?${query.toString()}`;
+      const result = await fetchWithClientCache(url, {
+        bypassCache: isManualRefresh,
+        ttl: 15_000,
+      });
 
-      if (res.ok && result.success) {
-        setLogs(result.data || []);
-        if (result.pagination) {
-          setTotalPages(result.pagination.totalPages || 1);
-          setTotalCount(result.pagination.total || 0);
+      if (result.success && result.data) {
+        setLogs(result.data.data || []);
+        if (result.data.pagination) {
+          setTotalPages(result.data.pagination.totalPages || 1);
+          setTotalCount(result.data.pagination.total || 0);
         }
+      } else if (!result.fromCache) {
+        toast.error("Failed to load audit logs");
       }
     } catch (err) {
       console.error("Failed to fetch audit logs:", err);
       toast.error("Failed to load audit logs");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [actionFilter, debouncedSearch, page]);
 
@@ -114,10 +123,12 @@ function AuditLogsContent() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchLogs}
-            className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-3.5 py-2 rounded-lg border border-neutral-800 transition flex items-center gap-2"
+            onClick={() => fetchLogs(true)}
+            disabled={isRefreshing}
+            className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-3.5 py-2 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </button>
           <button
             onClick={exportCSV}

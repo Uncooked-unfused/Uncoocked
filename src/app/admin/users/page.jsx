@@ -21,9 +21,12 @@ import {
   X,
 } from "lucide-react";
 
+import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+
 function UsersManagementContent() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
@@ -53,8 +56,8 @@ function UsersManagementContent() {
   }, [search]);
 
   // Fetch Users List
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
+  const fetchUsers = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
       const query = new URLSearchParams();
       if (debouncedSearch) query.set("search", debouncedSearch);
@@ -63,21 +66,27 @@ function UsersManagementContent() {
       query.set("page", page.toString());
       query.set("limit", "10");
 
-      const res = await fetch(`/api/admin/users?${query.toString()}`);
-      const result = await res.json();
+      const url = `/api/admin/users?${query.toString()}`;
+      const result = await fetchWithClientCache(url, {
+        bypassCache: isManualRefresh,
+        ttl: 15_000,
+      });
 
-      if (res.ok && result.success) {
-        setUsers(result.data || []);
-        if (result.pagination) {
-          setTotalPages(result.pagination.totalPages || 1);
-          setTotalCount(result.pagination.total || 0);
+      if (result.success && result.data) {
+        setUsers(result.data.data || []);
+        if (result.data.pagination) {
+          setTotalPages(result.data.pagination.totalPages || 1);
+          setTotalCount(result.data.pagination.total || 0);
         }
+      } else if (!result.fromCache) {
+        toast.error("Failed to load user management directory");
       }
     } catch (err) {
       console.error("Failed to fetch users:", err);
       toast.error("Failed to load user management directory");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [debouncedSearch, roleFilter, sortBy, page]);
 
@@ -119,10 +128,13 @@ function UsersManagementContent() {
 
       if (res.ok && data.success) {
         toast.success(`Successfully updated ${data.processedCount} users!`);
+        invalidateClientCache("/api/admin/users");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setSelectedIds([]);
         setBatchModal(null);
         setBatchReason("");
-        fetchUsers();
+        fetchUsers(true);
       } else {
         toast.error(`Batch action failed: ${data.error || res.statusText}`);
       }
@@ -146,9 +158,12 @@ function UsersManagementContent() {
 
       if (res.ok && data.success) {
         toast.success(`User role updated to ${newRole}!`);
+        invalidateClientCache("/api/admin/users");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setActionReason("");
         if (selectedUser?.id === userId) setSelectedUser(null);
-        fetchUsers();
+        fetchUsers(true);
       } else {
         toast.error(`Failed to update role: ${data.error}`);
       }
@@ -173,9 +188,12 @@ function UsersManagementContent() {
 
       if (res.ok && data.success) {
         toast.success(`User account ${action.toLowerCase()}d!`);
+        invalidateClientCache("/api/admin/users");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setActionReason("");
         if (selectedUser?.id === userId) setSelectedUser(null);
-        fetchUsers();
+        fetchUsers(true);
       } else {
         toast.error(`Failed to update status: ${data.error}`);
       }
@@ -206,10 +224,12 @@ function UsersManagementContent() {
         </div>
 
         <button
-          onClick={fetchUsers}
-          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2"
+          onClick={() => fetchUsers(true)}
+          disabled={isRefreshing}
+          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh Users
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+          {isRefreshing ? "Refreshing..." : "Refresh Users"}
         </button>
       </div>
 

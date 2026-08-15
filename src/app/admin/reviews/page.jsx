@@ -23,6 +23,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+
 function ReviewsManagementContent() {
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({
@@ -33,6 +35,7 @@ function ReviewsManagementContent() {
     criticalReviewsCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState("ALL");
@@ -83,8 +86,8 @@ function ReviewsManagementContent() {
   }, [search]);
 
   // Fetch Reviews
-  const fetchReviews = useCallback(async () => {
-    setLoading(true);
+  const fetchReviews = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
       const query = new URLSearchParams();
       if (debouncedSearch) query.set("search", debouncedSearch);
@@ -93,19 +96,22 @@ function ReviewsManagementContent() {
       query.set("page", page.toString());
       query.set("limit", "10");
 
-      const res = await fetch(`/api/admin/reviews?${query.toString()}`);
-      const result = await res.json();
+      const url = `/api/admin/reviews?${query.toString()}`;
+      const result = await fetchWithClientCache(url, {
+        bypassCache: isManualRefresh,
+        ttl: 15_000,
+      });
 
-      if (res.ok && result.success) {
-        setReviews(result.data || []);
-        if (result.pagination) {
-          setTotalPages(result.pagination.totalPages || 1);
-          setTotalCount(result.pagination.total || 0);
+      if (result.success && result.data?.success) {
+        setReviews(result.data.data || []);
+        if (result.data.pagination) {
+          setTotalPages(result.data.pagination.totalPages || 1);
+          setTotalCount(result.data.pagination.total || 0);
         }
-        if (result.stats) {
-          setStats(result.stats);
+        if (result.data.stats) {
+          setStats(result.data.stats);
         }
-      } else {
+      } else if (!result.fromCache) {
         toast.error(result.error || "Failed to load platform reviews");
       }
     } catch (err) {
@@ -113,6 +119,7 @@ function ReviewsManagementContent() {
       toast.error("Network error while loading reviews");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [debouncedSearch, ratingFilter, sortBy, page]);
 
@@ -154,10 +161,13 @@ function ReviewsManagementContent() {
 
       if (res.ok && data.success) {
         toast.success(`Successfully removed ${data.processedCount} reviews!`);
+        invalidateClientCache("/api/admin/reviews");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setSelectedIds([]);
         setBatchModal(false);
         setBatchReason("");
-        fetchReviews();
+        fetchReviews(true);
       } else {
         toast.error(`Bulk deletion failed: ${data.error || res.statusText}`);
       }
@@ -186,6 +196,9 @@ function ReviewsManagementContent() {
 
       if (res.ok && data.success) {
         toast.success("Review published successfully!");
+        invalidateClientCache("/api/admin/reviews");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setCreateModal(false);
         setCreateForm({
           userName: "",
@@ -194,7 +207,7 @@ function ReviewsManagementContent() {
           comment: "",
           reason: "",
         });
-        fetchReviews();
+        fetchReviews(true);
       } else {
         toast.error(`Failed to create review: ${data.error || "Unknown error"}`);
       }
@@ -231,8 +244,11 @@ function ReviewsManagementContent() {
 
       if (res.ok && data.success) {
         toast.success("Review updated successfully!");
+        invalidateClientCache("/api/admin/reviews");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setEditModal(null);
-        fetchReviews();
+        fetchReviews(true);
       } else {
         toast.error(`Failed to update review: ${data.error || "Unknown error"}`);
       }
@@ -258,9 +274,12 @@ function ReviewsManagementContent() {
 
       if (res.ok && data.success) {
         toast.success("Review deleted successfully!");
+        invalidateClientCache("/api/admin/reviews");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setDeleteModal(null);
         setDeleteReason("");
-        fetchReviews();
+        fetchReviews(true);
       } else {
         toast.error(`Failed to delete review: ${data.error || "Unknown error"}`);
       }
@@ -319,10 +338,12 @@ function ReviewsManagementContent() {
             <Plus className="w-4 h-4" /> Add Review
           </button>
           <button
-            onClick={fetchReviews}
-            className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2"
+            onClick={() => fetchReviews(true)}
+            disabled={isRefreshing}
+            className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </div>

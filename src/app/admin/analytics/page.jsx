@@ -19,27 +19,33 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export default function AnalyticsDashboardPage() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+import { getCachedAdminData, fetchWithClientCache } from "@/lib/clientCache";
 
-  const fetchAnalytics = useCallback(async () => {
-    setLoading(true);
+export default function AnalyticsDashboardPage() {
+  const [data, setData] = useState(() => getCachedAdminData("/api/admin/analytics")?.data || null);
+  const [loading, setLoading] = useState(() => !getCachedAdminData("/api/admin/analytics"));
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchAnalytics = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
-      const res = await fetch("/api/admin/analytics");
-      const result = await res.json();
-      if (res.ok && result.success) {
-        setData(result.data);
-      } else {
+      const result = await fetchWithClientCache("/api/admin/analytics", {
+        bypassCache: isManualRefresh,
+        ttl: 20_000,
+      });
+      if (result.success && result.data?.success) {
+        setData(result.data.data);
+      } else if (!result.fromCache) {
         toast.error(result.error || "Failed to load operational analytics");
       }
     } catch (err) {
       console.error("Failed to fetch analytics:", err);
-      toast.error("Network error loading analytics");
+      if (!data) toast.error("Network error loading analytics");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  }, []);
+  }, [data]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount
@@ -84,7 +90,7 @@ export default function AnalyticsDashboardPage() {
     toast.success("Analytics CSV exported!");
   };
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
         <div className="space-y-3 text-center">
@@ -161,10 +167,12 @@ export default function AnalyticsDashboardPage() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchAnalytics}
-            className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-3.5 py-2 rounded-lg border border-neutral-800 transition flex items-center gap-2"
+            onClick={() => fetchAnalytics(true)}
+            disabled={isRefreshing}
+            className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-3.5 py-2 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh Data
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh Data"}
           </button>
           <button
             onClick={exportAnalyticsCSV}

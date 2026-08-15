@@ -163,57 +163,6 @@ export default function ContactPage() {
             </form>
           </div>
 
-          {/* Contact Details */}
-          <div className="bg-dark-card p-8 rounded-2xl border border-dark-border space-y-6">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                📍 Headquarters
-              </h3>
-              <p className="text-xs text-gray-300 mt-2 leading-relaxed">
-                Tech Hub Building, Suite 305
-                <br />
-                Main Campus Quadrant
-                <br />
-                University Center
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                ✉ Email Channels
-              </h3>
-              <p className="text-xs text-gray-300 mt-2 space-y-2">
-                <span>Support: </span>
-                <br />
-                <a
-                  href="mailto:support@uncooked.edu"
-                  className="text-neon-purple hover:underline font-semibold"
-                >
-                  support@uncooked.edu
-                </a>
-                <br />
-                <span>Partnerships: </span>
-                <br />
-                <a
-                  href="mailto:sponsors@uncooked.edu"
-                  className="text-neon-purple hover:underline font-semibold"
-                >
-                  sponsors@uncooked.edu
-                </a>
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                ⏰ Office Hours
-              </h3>
-              <p className="text-xs text-gray-300 mt-2 leading-relaxed">
-                Monday – Friday
-                <br />
-                9:00 AM – 5:00 PM EST
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

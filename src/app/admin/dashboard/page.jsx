@@ -21,34 +21,41 @@ import {
   Star,
 } from "lucide-react";
 
-export default function AdminDashboardPage() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+import { getCachedAdminData, fetchWithClientCache } from "@/lib/clientCache";
 
-  const fetchDashboardData = useCallback(async () => {
-    setLoading(true);
+export default function AdminDashboardPage() {
+  const [data, setData] = useState(() => getCachedAdminData("/api/admin/stats"));
+  const [loading, setLoading] = useState(() => !getCachedAdminData("/api/admin/stats"));
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchDashboardData = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
-      const res = await fetch("/api/admin/stats");
-      const result = await res.json();
-      if (res.ok && result.success) {
-        setData(result);
-      } else {
+      const result = await fetchWithClientCache("/api/admin/stats", {
+        bypassCache: isManualRefresh,
+        ttl: 20_000,
+      });
+
+      if (result.success && result.data?.success) {
+        setData(result.data);
+      } else if (!result.fromCache) {
         toast.error(result.error || "Failed to load admin stats");
       }
     } catch (err) {
       console.error("Failed to fetch admin stats:", err);
-      toast.error("Network error loading dashboard");
+      if (!data) toast.error("Network error loading dashboard");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  }, []);
+  }, [data]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
         <div className="space-y-3 text-center">
@@ -88,10 +95,12 @@ export default function AdminDashboardPage() {
         </div>
 
         <button
-          onClick={fetchDashboardData}
-          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2"
+          onClick={() => fetchDashboardData(true)}
+          disabled={isRefreshing}
+          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh Dashboard
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+          {isRefreshing ? "Refreshing..." : "Refresh Dashboard"}
         </button>
       </div>
 

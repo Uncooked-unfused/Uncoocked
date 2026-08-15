@@ -37,15 +37,33 @@ export async function requireEventManager(eventId, token) {
   return Boolean(mgr);
 }
 
+// In-memory cache for Super Admin / Admin role verification (60-second TTL)
+// to eliminate redundant DB lookups on high-frequency API requests.
+const ROLE_CACHE_TTL_MS = 60_000;
+const userRoleCache = new Map();
+
+export function invalidateUserRoleCache(userId) {
+  if (userId) {
+    userRoleCache.delete(userId);
+  } else {
+    userRoleCache.clear();
+  }
+}
+
 // Throws if the request's authenticated user is not a SUPER_ADMIN. Re-fetches
-// the role from the database rather than trusting the JWT alone, so a role
-// change takes effect immediately rather than waiting for the token to
-// refresh. Returns the fresh user record ({ id, role }) on success.
+// the role with a 60-second cache so role checks don't block every request with
+// cross-region database latency.
 export async function requireSuperAdmin(request) {
   const token = await getAuthToken(request);
 
   if (!token?.sub) {
     throw new Error("UNAUTHORIZED");
+  }
+
+  const now = Date.now();
+  const cached = userRoleCache.get(token.sub);
+  if (cached && now - cached.cachedAt < ROLE_CACHE_TTL_MS) {
+    return cached.user;
   }
 
   const user = await prisma.user.findUnique({
@@ -58,6 +76,7 @@ export async function requireSuperAdmin(request) {
     throw new Error("UNAUTHORIZED");
   }
 
+  userRoleCache.set(token.sub, { user, cachedAt: now });
   return user;
 }
 
@@ -69,13 +88,22 @@ export async function requirePermission(request, requiredPermission) {
     throw new Error("UNAUTHORIZED");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: token.sub },
-    select: { id: true, role: true, permissions: true },
-  });
+  const now = Date.now();
+  let user;
+  const cached = userRoleCache.get(token.sub);
+  if (cached && now - cached.cachedAt < ROLE_CACHE_TTL_MS) {
+    user = cached.user;
+  } else {
+    user = await prisma.user.findUnique({
+      where: { id: token.sub },
+      select: { id: true, role: true, permissions: true },
+    });
 
-  if (!user) {
-    throw new Error("UNAUTHORIZED");
+    if (!user) {
+      throw new Error("UNAUTHORIZED");
+    }
+
+    userRoleCache.set(token.sub, { user, cachedAt: now });
   }
 
   const normalizedRole = user.role?.toUpperCase();
