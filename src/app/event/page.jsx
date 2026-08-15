@@ -1,31 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import TwinLayout from "@/components/layout/TwinLayout";
+import nextDynamic from "next/dynamic";
 import EventsExplorer from "@/components/explorer/EventsExplorer";
 import { mockEvents } from "@/lib/mockData";
-import RecommendedEvents from "@/components/event/RecommendedEvents";
 import { useUser } from "@/context/UserContext";
+
+const TwinLayout = nextDynamic(() => import("@/components/layout/TwinLayout"), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[500px] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
+
+const RecommendedEvents = nextDynamic(() => import("@/components/event/RecommendedEvents"), {
+  ssr: false,
+});
 
 export default function EventPage() {
   const { user } = useUser();
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [allEvents, setAllEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState(() => mockEvents);
 
   const loadEvents = async () => {
     try {
-      const res = await fetch("/api/events", { cache: "no-store" });
+      const res = await fetch("/api/events");
       const data = await res.json();
       if (data.success && Array.isArray(data.events)) {
         // If DB has events, use them; only fallback to mock if DB is empty
         setAllEvents(data.events.length > 0 ? data.events : mockEvents);
-      } else {
-        setAllEvents(mockEvents);
       }
     } catch (err) {
       console.error("Failed to load events", err);
-      setAllEvents(mockEvents);
     }
   };
 
@@ -186,5 +195,3 @@ export default function EventPage() {
     </div>
   );
 }
-
-export const dynamic = 'force-dynamic';

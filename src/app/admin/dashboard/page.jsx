@@ -44,28 +44,16 @@ export default function AdminDashboardPage() {
       }
     } catch (err) {
       console.error("Failed to fetch admin stats:", err);
-      if (!data) toast.error("Network error loading dashboard");
+      toast.error("Network error loading dashboard");
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [data]);
+  }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount
     fetchDashboardData();
   }, [fetchDashboardData]);
-
-  if (loading && !data) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
-        <div className="space-y-3 text-center">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-gray-400 font-mono">Loading Super Admin Operational Metrics...</p>
-        </div>
-      </div>
-    );
-  }
 
   const stats = data?.stats || {};
   const recentActivity = data?.recentActivity || [];
@@ -157,7 +145,7 @@ export default function AdminDashboardPage() {
             <Link
               key={i}
               href={card.href}
-              className={`bg-neutral-900 border ${card.color} p-5 rounded-xl hover:bg-neutral-800/80 transition flex flex-col justify-between space-y-3 group shadow-md`}
+              className={`bg-neutral-900 border ${card.color} p-5 rounded-xl hover:bg-neutral-800/80 transition flex flex-col justify-between space-y-3 group shadow-md min-h-[120px]`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{card.title}</span>
@@ -166,7 +154,11 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
               <div>
-                <p className={`text-3xl font-black ${card.color.split(" ")[0]}`}>{card.value}</p>
+                {loading && !data ? (
+                  <div className="h-8 w-20 bg-neutral-800 animate-pulse rounded my-1" />
+                ) : (
+                  <p className={`text-3xl font-black ${card.color.split(" ")[0]}`}>{card.value}</p>
+                )}
                 <p className="text-[10px] text-gray-500 mt-1">{card.desc}</p>
               </div>
             </Link>
@@ -178,35 +170,57 @@ export default function AdminDashboardPage() {
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
         <div>
           <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Total Applications</span>
-          <span className="text-2xl font-black text-white">{stats.totalApplications ?? 0}</span>
+          {loading && !data ? (
+            <div className="h-7 w-12 bg-neutral-800 animate-pulse rounded mx-auto mt-1" />
+          ) : (
+            <span className="text-2xl font-black text-white">{stats.totalApplications ?? 0}</span>
+          )}
         </div>
         <div>
           <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Approval Rate</span>
-          <span className="text-2xl font-black text-emerald-400">{stats.approvalRate ?? "0.0"}%</span>
+          {loading && !data ? (
+            <div className="h-7 w-16 bg-neutral-800 animate-pulse rounded mx-auto mt-1" />
+          ) : (
+            <span className="text-2xl font-black text-emerald-400">{stats.approvalRate ?? "0.0"}%</span>
+          )}
         </div>
         <div>
           <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Rejection Rate</span>
-          <span className="text-2xl font-black text-red-400">{stats.rejectionRate ?? "0.0"}%</span>
+          {loading && !data ? (
+            <div className="h-7 w-16 bg-neutral-800 animate-pulse rounded mx-auto mt-1" />
+          ) : (
+            <span className="text-2xl font-black text-red-400">{stats.rejectionRate ?? "0.0"}%</span>
+          )}
         </div>
         <div>
           <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Queue Size</span>
-          <span className="text-2xl font-black text-amber-400">{stats.verificationQueueSize ?? 0}</span>
+          {loading && !data ? (
+            <div className="h-7 w-12 bg-neutral-800 animate-pulse rounded mx-auto mt-1" />
+          ) : (
+            <span className="text-2xl font-black text-amber-400">{stats.verificationQueueSize ?? 0}</span>
+          )}
         </div>
         <div>
           <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">System Status</span>
           <div className="flex flex-col items-center">
-            <span className={`text-sm font-extrabold inline-flex items-center gap-1.5 px-2.5 py-1 mt-1 rounded-full border ${
-              (stats.activeIncidentsCount || 0) === 0 && (stats.systemHealth?.status !== "DEGRADED")
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${ (stats.activeIncidentsCount || 0) === 0 ? "bg-emerald-400 animate-pulse" : "bg-rose-400 animate-ping" }`} />
-              {(stats.activeIncidentsCount || 0) === 0 ? "Operational" : `${stats.activeIncidentsCount} Incident(s)`}
-            </span>
-            {stats.systemHealth && (
-              <span className="text-[9px] text-gray-400 font-mono mt-1">
-                DB: {stats.systemHealth.dbLatencyMs >= 0 ? `${stats.systemHealth.dbLatencyMs}ms` : "ERR"} | P95: {stats.systemHealth.p95LatencyMs}ms
-              </span>
+            {loading && !data ? (
+              <div className="h-7 w-24 bg-neutral-800 animate-pulse rounded mx-auto mt-1" />
+            ) : (
+              <>
+                <span className={`text-sm font-extrabold inline-flex items-center gap-1.5 px-2.5 py-1 mt-1 rounded-full border ${
+                  (stats.activeIncidentsCount || 0) === 0 && (stats.systemHealth?.status !== "DEGRADED")
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${ (stats.activeIncidentsCount || 0) === 0 ? "bg-emerald-400 animate-pulse" : "bg-rose-400 animate-ping" }`} />
+                  {(stats.activeIncidentsCount || 0) === 0 ? "Operational" : `${stats.activeIncidentsCount} Incident(s)`}
+                </span>
+                {stats.systemHealth && (
+                  <span className="text-[9px] text-gray-400 font-mono mt-1">
+                    DB: {stats.systemHealth.dbLatencyMs >= 0 ? `${stats.systemHealth.dbLatencyMs}ms` : "ERR"} | P95: {stats.systemHealth.p95LatencyMs}ms
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -225,7 +239,13 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
 
-          {pendingWorkItems.length > 0 ? (
+          {loading && !data ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="h-14 bg-black/40 border border-neutral-800 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : pendingWorkItems.length > 0 ? (
             <div className="space-y-3">
               {pendingWorkItems.map((item) => (
                 <div
@@ -282,7 +302,13 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
 
-          {recentActivity.length > 0 ? (
+          {loading && !data ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="h-12 bg-black/40 border border-neutral-800 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : recentActivity.length > 0 ? (
             <div className="space-y-3 border-l-2 border-neutral-800 pl-3">
               {recentActivity.map((log) => (
                 <div key={log.id} className="space-y-1 text-xs">

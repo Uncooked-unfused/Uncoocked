@@ -163,11 +163,18 @@ export async function GET(request) {
     statsCache = responseData;
     lastCacheTime = nowTimestamp;
 
-    return NextResponse.json({
-      success: true,
-      cached: false,
-      ...responseData,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        cached: false,
+        ...responseData,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=10, stale-while-revalidate=30",
+        },
+      }
+    );
   } catch (error) {
     if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN_PERMISSION") {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
