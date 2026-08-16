@@ -68,20 +68,30 @@ const nextConfig = {
       },
     ];
   },
-  // Disabled port 5000 fallback rewrite to prevent ECONNREFUSED errors 
-  // and allow Next.js local API routes (/api/*) to handle requests directly.
-  /*
-  async rewrites() {
-    return {
-      fallback: [
-        {
-          source: '/api/:path*',
-          destination: 'http://127.0.0.1:5000/api/:path*',
-        },
-      ],
-    };
+  async redirects() {
+    return [
+      {
+        source: "/events",
+        destination: "/event",
+        permanent: true,
+      },
+      {
+        source: "/opps",
+        destination: "/opportunities",
+        permanent: true,
+      },
+      {
+        source: "/opp",
+        destination: "/opportunities",
+        permanent: true,
+      },
+      {
+        source: "/clubs",
+        destination: "/partners",
+        permanent: true,
+      },
+    ];
   },
-  */
 };
 
 export default nextConfig;

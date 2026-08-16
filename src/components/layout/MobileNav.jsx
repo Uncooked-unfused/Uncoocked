@@ -9,15 +9,15 @@ export default function MobileNav() {
   const pathname = usePathname();
   const { user } = useUser();
 
-  // Hide bottom nav in admin routes
-  if (pathname.startsWith("/admin")) {
+  // Hide bottom nav on admin routes
+  if (pathname && pathname.startsWith("/admin")) {
     return null;
   }
 
   const navItems = [
     { name: "Events", href: "/event", icon: Calendar },
     { name: "Opps", href: "/opportunities", icon: Briefcase },
-    { name: "Host", href: "/host/apply", icon: PlusCircle, isCta: true },
+    { name: "Host", href: "/host", icon: PlusCircle, isCta: true },
     { name: "Clubs", href: "/partners", icon: Users },
     { name: "Profile", href: user ? "/profile" : "/login", icon: User },
   ];
@@ -27,16 +27,16 @@ export default function MobileNav() {
       <nav className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
 
           if (item.isCta) {
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex flex-col items-center justify-center text-purple-400 -mt-4"
+                className="flex flex-col items-center justify-center text-purple-400 -mt-4 group"
               >
-                <div className="w-11 h-11 rounded-full bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-600/40 border-2 border-black">
+                <div className="w-11 h-11 rounded-full bg-purple-600 group-hover:bg-purple-500 transition-colors flex items-center justify-center text-white shadow-lg shadow-purple-600/40 border-2 border-black">
                   <Icon className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] font-bold text-purple-400 mt-0.5">
@@ -51,7 +51,7 @@ export default function MobileNav() {
               key={item.name}
               href={item.href}
               className={`flex flex-col items-center justify-center py-1 px-2 transition-colors duration-150 ${
-                isActive ? "text-purple-400" : "text-white/40 hover:text-white/70"
+                isActive ? "text-purple-400 font-semibold" : "text-white/40 hover:text-white/70"
               }`}
             >
               <Icon className="w-4 h-4" />

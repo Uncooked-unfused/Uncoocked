@@ -13,7 +13,7 @@ export default function Partners() {
   ];
 
   return (
-    <section className="py-10 relative w-full border-t border-white/6">
+    <section id="partners" className="py-10 relative w-full border-t border-white/6 scroll-mt-20">
       <div className="mx-auto max-w-7xl px-6 lg:px-8 space-y-6 text-center">
         <h3 className="text-[11px] font-semibold text-white/30 uppercase tracking-widest">
           Built for students across the ecosystem

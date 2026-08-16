@@ -72,7 +72,8 @@ export async function middleware(req) {
     path.startsWith("/dashboard") ||
     path.startsWith("/profile") ||
     path.startsWith("/onboarding") ||
-    path.startsWith("/host") ||
+    path.startsWith("/host/apply") ||
+    path.startsWith("/host/status") ||
     path.startsWith("/requests");
 
   if (isProtectedUserRoute && !token) {

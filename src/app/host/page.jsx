@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, ShieldCheck, BarChart3, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Sparkles, ShieldCheck, BarChart3, Users, ArrowRight } from "lucide-react";
 
 export default function HostLandingPage() {
   const features = [
