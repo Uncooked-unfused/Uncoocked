@@ -53,7 +53,41 @@ export default function AttendeesPage({ params }) {
   };
 
   useEffect(() => {
-    fetchAttendees();
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await fetch(`/api/registrations?eventId=${eventId}${user ? `&requesterEmail=${encodeURIComponent(user)}` : ""}`);
+        const data = await res.json();
+        if (!ignore && data.success) {
+          const formatted = (data.registrations || []).map(r => ({
+            id: r.id,
+            name: r.user?.name || r.user?.email?.split('@')?.[0] || "Attendee",
+            email: r.user?.email || "-",
+            date: r.registeredAt ? new Date(r.registeredAt).toISOString().split('T')[0] : "-",
+            ticketType: r.ticketTier?.name || "General Admission",
+            paymentStatus: r.coupon ? "Discounted" : "Paid",
+            coupon: r.coupon?.code || "-",
+            teamName: r.teamName || "-",
+            track: r.track || "-",
+            status: r.status || "Confirmed",
+            checkedIn: Boolean(r.checkInStatus)
+          }));
+          setAttendees(formatted);
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Failed to load attendees:", err);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
   }, [eventId, user]);
 
   const filteredAttendees = attendees.filter(a => {

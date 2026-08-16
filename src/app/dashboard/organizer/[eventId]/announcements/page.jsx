@@ -33,7 +33,28 @@ export default function AnnouncementsPage({ params }) {
   };
 
   useEffect(() => {
-    fetchAnnouncements();
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await fetch(`/api/events/${eventId}/announcements`);
+        const data = await res.json();
+        if (!ignore && res.ok) {
+          setAnnouncements(data.announcements || []);
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Failed to fetch announcements:", err);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
   }, [eventId]);
 
   const handlePost = async (e) => {

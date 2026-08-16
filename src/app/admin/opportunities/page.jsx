@@ -156,14 +156,77 @@ export default function AdminOpportunitiesPage() {
   }, [appStatusFilter, appOpportunityFilter, appSearchQuery]);
 
   useEffect(() => {
-    fetchOpportunities();
-  }, [fetchOpportunities]);
+    let ignore = false;
+    async function load() {
+      try {
+        const params = new URLSearchParams();
+        if (statusFilter !== "ALL") params.append("status", statusFilter);
+        if (typeFilter !== "ALL") params.append("type", typeFilter);
+        if (searchQuery.trim()) params.append("search", searchQuery.trim());
+
+        const url = `/api/admin/opportunities?${params.toString()}`;
+        const result = await fetchWithClientCache(url, { ttl: 15_000 });
+
+        if (!ignore) {
+          if (result.success && result.data?.success) {
+            setOpportunities(result.data.items || []);
+            if (result.data.stats) setStats(result.data.stats);
+          } else if (!result.fromCache && result.error) {
+            toast.error(result.error || "Failed to load opportunities");
+          }
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Error loading opportunities:", err);
+          toast.error("Failed to load opportunities");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [statusFilter, typeFilter, searchQuery]);
 
   useEffect(() => {
-    if (activeTab === "applications") {
-      fetchApplications();
+    if (activeTab !== "applications") return;
+    let ignore = false;
+    async function loadApps() {
+      try {
+        const params = new URLSearchParams();
+        if (appStatusFilter !== "ALL") params.append("status", appStatusFilter);
+        if (appOpportunityFilter) params.append("opportunityId", appOpportunityFilter);
+        if (appSearchQuery.trim()) params.append("search", appSearchQuery.trim());
+
+        const url = `/api/admin/opportunities/applications?${params.toString()}`;
+        const result = await fetchWithClientCache(url, { ttl: 15_000 });
+
+        if (!ignore) {
+          if (result.success && result.data?.success) {
+            setApplications(result.data.items || []);
+          } else if (!result.fromCache && result.error) {
+            toast.error(result.error || "Failed to load applications");
+          }
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Error loading applications:", err);
+        }
+      } finally {
+        if (!ignore) {
+          setApplicationsLoading(false);
+        }
+      }
     }
-  }, [activeTab, fetchApplications]);
+    loadApps();
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, appStatusFilter, appOpportunityFilter, appSearchQuery]);
 
   // Open Create Modal
   const openCreateModal = () => {

@@ -52,8 +52,35 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    let ignore = false;
+    async function load() {
+      try {
+        const result = await fetchWithClientCache("/api/admin/stats", {
+          ttl: 20_000,
+        });
+        if (!ignore) {
+          if (result.success && result.data?.success) {
+            setData(result.data);
+          } else if (!result.fromCache) {
+            toast.error(result.error || "Failed to load admin stats");
+          }
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Failed to fetch admin stats:", err);
+          toast.error("Network error loading dashboard");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const stats = data?.stats || {};
   const recentActivity = data?.recentActivity || [];
