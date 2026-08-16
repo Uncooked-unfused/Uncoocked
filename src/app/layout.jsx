@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/layout/AppShell";
+import MobileNav from "@/components/layout/MobileNav";
 import { UserProvider } from "@/context/UserContext";
 import { NextAuthProvider } from "@/context/NextAuthProvider";
 import { NavigationHistoryProvider } from "@/context/NavigationHistoryContext";
@@ -32,12 +33,13 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full subpixel-antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-black text-white transition-colors duration-300">
+      <body className="min-h-full flex flex-col bg-black text-white transition-colors duration-300 pb-16 md:pb-0">
         <NextAuthProvider>
           <NavigationHistoryProvider>
             <UserProvider>
               <SessionMonitor />
               <AppShell>{children}</AppShell>
+              <MobileNav />
             </UserProvider>
           </NavigationHistoryProvider>
         </NextAuthProvider>

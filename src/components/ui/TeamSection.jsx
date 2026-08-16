@@ -24,20 +24,20 @@ export default function TeamSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 max-w-7xl mx-auto">
           {members.map((m, idx) => (
             <div
               key={idx}
-              className="bg-dark-card border border-dark-border rounded-xl p-6 text-center space-y-4 hover:border-neon-purple/30 hover:shadow-neon transition-all duration-300 group"
+              className="bg-dark-card border border-dark-border rounded-xl p-4 text-center space-y-3 hover:border-neon-purple/30 hover:shadow-neon transition-all duration-300 group"
             >
-              <div className="mx-auto w-16 h-16 rounded-full bg-neon-purple/5 border border-dark-border group-hover:border-neon-purple/40 text-lg font-black text-neon-lavender flex items-center justify-center transition-all duration-300">
+              <div className="mx-auto w-14 h-14 rounded-full bg-neon-purple/5 border border-dark-border group-hover:border-neon-purple/40 text-base font-black text-neon-lavender flex items-center justify-center transition-all duration-300">
                 {m.avatar}
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-bold text-white group-hover:text-neon-purple transition-colors">
+                <h4 className="text-xs font-bold text-white group-hover:text-neon-purple transition-colors truncate">
                   {m.name}
                 </h4>
-                <p className="text-[10px] text-gray-500 font-semibold">
+                <p className="text-[10px] text-gray-500 font-semibold truncate">
                   {m.role}
                 </p>
               </div>

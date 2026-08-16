@@ -23,18 +23,23 @@ export default function EventPage() {
   const { user } = useUser();
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [allEvents, setAllEvents] = useState(() => mockEvents);
+  const [allEvents, setAllEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const loadEvents = async () => {
     try {
-      const res = await fetch("/api/events");
+      setLoading(true);
+      const res = await fetch("/api/events", { cache: "no-store" });
       const data = await res.json();
       if (data.success && Array.isArray(data.events)) {
-        // If DB has events, use them; only fallback to mock if DB is empty
+        // If DB has events, use them; fallback to mock only if empty
         setAllEvents(data.events.length > 0 ? data.events : mockEvents);
       }
     } catch (err) {
       console.error("Failed to load events", err);
+      setAllEvents(mockEvents);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,14 +54,14 @@ export default function EventPage() {
     }, 0);
   }, []);
 
-  // Force scroll the page back to the absolute top (0,0) whenever a student changes selected events
+  // Force scroll the page back to top whenever a student selects an event
   useEffect(() => {
     if (selectedEventId && typeof window !== "undefined") {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }
   }, [selectedEventId]);
 
-  // 1. Sync state with URL parameter on mount & handle browser back arrow navigation
+  // Sync state with URL parameter on mount & handle browser back arrow navigation
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -102,23 +107,37 @@ export default function EventPage() {
     }
   };
 
+  // Render detail view if an event ID is selected in URL
   if (selectedEventId) {
-    const selectedEvent = allEvents.find((e) => e.id === selectedEventId);
+    const selectedEvent = allEvents.find(
+      (e) => String(e.id || e._id) === String(selectedEventId)
+    );
+
     if (selectedEvent) {
-      const userEmail = user?.email || (typeof user === "string" ? user : "anonymous@student.com");
+      const userEmail =
+        user?.email || (typeof user === "string" ? user : "anonymous@student.com");
       const currentUserId = user?.id || null;
-      
-      // Foolproof Normalized Anti-Scam Check: Validates ID strings and organizer relationship chains completely
+
+      // Normalized Anti-Scam Check: Validates IDs and organizer relationship chains
       const isOrganizerUser = !!(
-        (selectedEvent.organizerId && currentUserId && String(selectedEvent.organizerId) === String(currentUserId)) ||
-        (selectedEvent.organizer?.id && currentUserId && String(selectedEvent.organizer.id) === String(currentUserId)) ||
-        (selectedEvent.organizer?.email && userEmail && String(selectedEvent.organizer.email).toLowerCase() === String(userEmail).toLowerCase()) ||
-        (selectedEvent.organizerId && String(selectedEvent.organizerId).toLowerCase() === String(userEmail).toLowerCase())
+        (selectedEvent.organizerId &&
+          currentUserId &&
+          String(selectedEvent.organizerId) === String(currentUserId)) ||
+        (selectedEvent.organizer?.id &&
+          currentUserId &&
+          String(selectedEvent.organizer.id) === String(currentUserId)) ||
+        (selectedEvent.organizer?.email &&
+          userEmail &&
+          String(selectedEvent.organizer.email).toLowerCase() ===
+            String(userEmail).toLowerCase()) ||
+        (selectedEvent.organizerId &&
+          String(selectedEvent.organizerId).toLowerCase() ===
+            String(userEmail).toLowerCase())
       );
 
       const eventData = {
         ...selectedEvent,
-        isHost: isOrganizerUser, // Injected flag passed down to hide the action triggers cleanly
+        isHost: isOrganizerUser,
         schedule:
           selectedEvent.schedule ||
           `
@@ -152,17 +171,35 @@ export default function EventPage() {
               event={eventData}
               chatUserData={chatUserData}
               selectedEventId={selectedEventId}
-              userId={currentUserId} // 👈 FIXED: Passing the active user's ID here
+              userId={currentUserId}
               onBack={() => {
-                window.history.back();
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  setSelectedEventId(null);
+                  window.history.pushState({}, "", "/event");
+                }
               }}
             />
           </div>
         </div>
       );
     }
+
+    // Show loading skeleton if still fetching events for the ID
+    if (loading) {
+      return (
+        <div className="bg-[#000000] w-full min-h-screen text-white flex items-center justify-center p-8">
+          <div className="animate-pulse flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-white/50">Loading event details...</span>
+          </div>
+        </div>
+      );
+    }
   }
 
+  // Render Explorer View
   return (
     <div className="bg-[#000000] w-full min-h-screen pt-6 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
@@ -184,9 +221,9 @@ export default function EventPage() {
           onSelectEvent={handleSelectEvent}
           recommendedSection={
             user && (
-              <RecommendedEvents 
-                userEmail={typeof user === "string" ? user : user?.email} 
-                onSelectEvent={handleSelectEvent} 
+              <RecommendedEvents
+                userEmail={typeof user === "string" ? user : user?.email}
+                onSelectEvent={handleSelectEvent}
               />
             )
           }

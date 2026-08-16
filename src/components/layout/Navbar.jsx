@@ -21,7 +21,6 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
 
     if (user) {
@@ -34,12 +33,27 @@ export default function Navbar() {
     }
   }, [user]);
 
+  // Dynamically include Dashboard in main nav when authenticated
   const links = [
-    { name: "Home", href: "/" },
-    { name: "Events", href: "/event" },
-    { name: "Opportunities", href: "/opportunities" },
-    { name: "Host an Event", href: "/host/apply" },
-  ];
+  { name: "Home", href: "/" },
+  ...(user ? [{ name: "Dashboard", href: "/dashboard" }] : []),
+  { name: "Events", href: "/event" },
+  { name: "Opportunities", href: "/opportunities" },
+  { name: "Host an Event", href: "/host" }, // Changed from /host/apply to /host
+];
+
+  // Helper function to safely extract display name and avatar initials
+  const getUserDisplayName = () => {
+    if (session?.user?.name) return session.user.name;
+    if (typeof user === "string") return user.includes("@") ? user.split("@")[0] : user;
+    if (typeof user === "object" && user !== null) {
+      return user.name || (user.email ? user.email.split("@")[0] : "User");
+    }
+    return "User";
+  };
+
+  const displayName = getUserDisplayName();
+  const initials = displayName.substring(0, 2).toUpperCase() || "U";
 
   if (pathname.startsWith("/admin")) {
     return null;
@@ -121,90 +135,88 @@ export default function Navbar() {
                     <div className="relative">
                       <button
                         onClick={() => setProfileOpen(!profileOpen)}
-                      className="flex items-center gap-2 rounded-full bg-white/5 border border-white/10 py-1 pl-1.5 pr-3 hover:border-white/20 hover:bg-white/8 transition-all duration-150 cursor-pointer focus:outline-none"
-                    >
-                      <div className="w-5 h-5 rounded-full bg-[#1a1a1a] border border-white/15 text-[9px] font-bold text-white/80 flex items-center justify-center uppercase">
-                        {(session?.user?.name || (typeof user === "string" ? user : "")).substring(0, 2) || "U"}
-                      </div>
-                      <span className="text-[11px] text-white/70 font-medium leading-none truncate max-w-[90px]">
-                        {session?.user?.name || (typeof user === "string" ? user.split("@")[0] : "User")}
-                      </span>
-                      <svg
-                        className={`h-3 w-3 text-white/40 transition-transform duration-150 ${profileOpen ? "rotate-180" : ""}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                        aria-expanded={profileOpen}
+                        className="flex items-center gap-2 rounded-full bg-white/5 border border-white/10 py-1 pl-1.5 pr-3 hover:border-white/20 hover:bg-white/8 transition-all duration-150 cursor-pointer focus:outline-none"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-
-                    {/* Profile Dropdown */}
-                    {profileOpen && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-40"
-                          onClick={() => setProfileOpen(false)}
-                        />
-                        <div
-                          onMouseLeave={() => setProfileOpen(false)}
-                          className="absolute right-0 mt-2.5 w-52 rounded-xl bg-black/90 border border-white/10 backdrop-blur-xl p-4 shadow-xl animate-slideUp z-50 space-y-3"
-                        >
-                          <div className="border-b border-white/8 pb-2.5">
-                            <span className="text-[10px] text-white/35 uppercase tracking-wider block font-medium">
-                              Signed in
-                            </span>
-                            <span className="text-[11px] text-white font-semibold block truncate mt-0.5" title={session?.user?.name || user}>
-                              {session?.user?.name || user}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-col gap-0.5 text-[12px]">
-                            {session?.user?.role === "SUPER_ADMIN" && (
-                              <Link
-                                href="/admin/dashboard"
-                                onClick={() => setProfileOpen(false)}
-                                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-amber-400 font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all duration-150"
-                              >
-                                🛡️ Admin Console
-                              </Link>
-                            )}
-                            {[
-                              { href: "/profile", label: "My Profile" },
-                              { href: "/dashboard", label: "Dashboard" },
-                              { href: "/host/apply", label: "Host an Event" },
-                              { href: "/host/status", label: "Host Status" },
-                              { href: "/opportunities", label: "Opportunities" },
-                              { href: "/about", label: "About Uncooked" },
-                            ].map(({ href, label }) => (
-                              <Link
-                                key={href}
-                                href={href}
-                                onClick={() => setProfileOpen(false)}
-                                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/6 transition-all duration-150"
-                              >
-                                {label}
-                              </Link>
-                            ))}
-                          </div>
-
-                          <div className="border-t border-white/8 pt-2.5">
-                            <button
-                              onClick={() => {
-                                setProfileOpen(false);
-                                logout();
-                                toast.success("Logged out successfully!");
-                              }}
-                              className="w-full text-center py-2 bg-red-500/8 border border-red-500/15 hover:bg-red-500/15 text-red-400 hover:text-red-300 text-[11px] font-semibold rounded-lg transition-all duration-150"
-                            >
-                              Sign Out
-                            </button>
-                          </div>
+                        <div className="w-5 h-5 rounded-full bg-[#1a1a1a] border border-white/15 text-[9px] font-bold text-white/80 flex items-center justify-center uppercase">
+                          {initials}
                         </div>
-                      </>
-                    )}
-                  </div>
-                </>
+                        <span className="text-[11px] text-white/70 font-medium leading-none truncate max-w-[90px]">
+                          {displayName}
+                        </span>
+                        <svg
+                          className={`h-3 w-3 text-white/40 transition-transform duration-150 ${profileOpen ? "rotate-180" : ""}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Profile Dropdown */}
+                      {profileOpen && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setProfileOpen(false)}
+                          />
+                          <div
+                            onMouseLeave={() => setProfileOpen(false)}
+                            className="absolute right-0 mt-2.5 w-52 rounded-xl bg-black/90 border border-white/10 backdrop-blur-xl p-4 shadow-xl animate-slideUp z-50 space-y-3"
+                          >
+                            <div className="border-b border-white/8 pb-2.5">
+                              <span className="text-[10px] text-white/35 uppercase tracking-wider block font-medium">
+                                Signed in
+                              </span>
+                              <span className="text-[11px] text-white font-semibold block truncate mt-0.5" title={displayName}>
+                                {displayName}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-col gap-0.5 text-[12px]">
+                              {session?.user?.role === "SUPER_ADMIN" && (
+                                <Link
+                                  href="/admin/dashboard"
+                                  onClick={() => setProfileOpen(false)}
+                                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-amber-400 font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all duration-150"
+                                >
+                                  🛡️ Admin Console
+                                </Link>
+                              )}
+                              {[
+                                { href: "/profile", label: "My Profile" },
+                                { href: "/host/status", label: "Host Status" },
+                                { href: "/about", label: "About Uncooked" },
+                              ].map(({ href, label }) => (
+                                <Link
+                                  key={href}
+                                  href={href}
+                                  onClick={() => setProfileOpen(false)}
+                                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/6 transition-all duration-150"
+                                >
+                                  {label}
+                                </Link>
+                              ))}
+                            </div>
+
+                            <div className="border-t border-white/8 pt-2.5">
+                              <button
+                                onClick={() => {
+                                  setProfileOpen(false);
+                                  logout();
+                                  toast.success("Logged out successfully!");
+                                }}
+                                className="w-full text-center py-2 bg-red-500/8 border border-red-500/15 hover:bg-red-500/15 text-red-400 hover:text-red-300 text-[11px] font-semibold rounded-lg transition-all duration-150"
+                              >
+                                Sign Out
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
                 ) : (
                   <Link
                     href="/login"
@@ -222,6 +234,7 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 text-white/50 hover:text-white focus:outline-none transition-colors duration-150"
                 aria-label="Toggle menu"
+                aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? (
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,10 +277,12 @@ export default function Navbar() {
                   <div className="space-y-2 px-1">
                     <div className="flex items-center gap-3">
                       <div className="w-7 h-7 rounded-full bg-[#1a1a1a] border border-white/12 text-xs font-semibold text-white/70 flex items-center justify-center uppercase">
-                        {user.substring(0, 2)}
+                        {initials}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[12px] text-white font-semibold truncate max-w-[180px]">{user}</span>
+                        <span className="text-[12px] text-white font-semibold truncate max-w-[180px]">
+                          {displayName}
+                        </span>
                         <span className="text-[10px] text-white/40 mt-0.5">Campus Account</span>
                       </div>
                     </div>
@@ -283,10 +298,7 @@ export default function Navbar() {
                       )}
                       {[
                         { href: "/profile", label: "My Profile" },
-                        { href: "/dashboard", label: "Dashboard" },
-                        { href: "/host/apply", label: "Host an Event" },
                         { href: "/host/status", label: "Host Status" },
-                        { href: "/opportunities", label: "Opportunities" },
                         { href: "/about", label: "About Uncooked" },
                       ].map(({ href, label }) => (
                         <Link

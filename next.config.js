@@ -68,16 +68,20 @@ const nextConfig = {
       },
     ];
   },
+  // Disabled port 5000 fallback rewrite to prevent ECONNREFUSED errors 
+  // and allow Next.js local API routes (/api/*) to handle requests directly.
+  /*
   async rewrites() {
     return {
       fallback: [
         {
           source: '/api/:path*',
-          destination: 'http://127.0.0.1:5000/api/:path*', // Proxy to Flask Backend
+          destination: 'http://127.0.0.1:5000/api/:path*',
         },
       ],
     };
   },
+  */
 };
 
 export default nextConfig;
