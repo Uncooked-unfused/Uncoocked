@@ -3,17 +3,36 @@ import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
 import { getSystemHealthStatus } from "@/server/services/systemMonitoringService";
 
+let statsCache = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 20_000; // 20-second in-memory TTL for instant subsequent dashboard loads
+
+export function invalidateAdminStatsCache() {
+  statsCache = null;
+  lastCacheTime = 0;
+}
+
 export async function GET(request) {
   try {
     await requireSuperAdmin(request);
 
+    const { searchParams } = new URL(request.url);
+    const bypassCache = searchParams.get("refresh") === "true";
+    const nowTimestamp = Date.now();
+
+    if (!bypassCache && statsCache && nowTimestamp - lastCacheTime < CACHE_TTL_MS) {
+      return NextResponse.json({
+        success: true,
+        cached: true,
+        ...statsCache,
+      });
+    }
+
     const now = new Date();
 
     const [
-      totalApplications,
       statusGroups,
-      totalUsers,
-      totalOrganizers,
+      userGroups,
       activeEvents,
       upcomingEvents,
       completedEvents,
@@ -21,15 +40,18 @@ export async function GET(request) {
       pendingWorkItems,
       activeIncidentsCount,
       systemHealth,
-      allReviews,
+      reviewStats,
+      activeOpportunities,
+      pendingJobApplications,
     ] = await Promise.all([
-      prisma.hostApplication.count().catch(() => 0),
       prisma.hostApplication.groupBy({
         by: ["status"],
         _count: { _all: true },
       }).catch(() => []),
-      prisma.user.count().catch(() => 0),
-      prisma.user.count({ where: { role: { in: ["ORGANIZER", "SUPER_ADMIN", "Organizer"] } } }).catch(() => 0),
+      prisma.user.groupBy({
+        by: ["role"],
+        _count: { _all: true },
+      }).catch(() => []),
       prisma.event.count({ where: { status: "Active", archived: false } }).catch(() => 0),
       prisma.event.count({ where: { date: { gte: now }, archived: false } }).catch(() => 0),
       prisma.event.count({ where: { OR: [{ status: "Completed" }, { date: { lt: now } }] } }).catch(() => 0),
@@ -59,24 +81,45 @@ export async function GET(request) {
         where: { status: { in: ["INVESTIGATING", "IDENTIFIED", "MONITORING"] } },
       }).catch(() => 0),
       getSystemHealthStatus().catch(() => null),
-      prisma.review.findMany({ select: { rating: true } }).catch(() => []),
+      prisma.review.aggregate({
+        _avg: { rating: true },
+        _count: { _all: true },
+      }).catch(() => ({ _avg: { rating: 0 }, _count: { _all: 0 } })),
+      prisma.opportunity.count({ where: { status: "ACTIVE" } }).catch(() => 0),
+      prisma.opportunityApplication.count({ where: { status: "PENDING" } }).catch(() => 0),
     ]);
 
-    const totalReviews = (allReviews || []).length;
-    const avgRating =
-      totalReviews > 0
-        ? (allReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / totalReviews).toFixed(1)
-        : "0.0";
+    // Parse host application status groups & compute total
+    let totalApplications = 0;
+    const statusMap = {};
+    if (Array.isArray(statusGroups)) {
+      for (const item of statusGroups) {
+        if (item && item.status) {
+          const count = item._count?._all ?? item._count?.status ?? (typeof item._count === "number" ? item._count : 0);
+          statusMap[item.status] = count;
+          totalApplications += count;
+        }
+      }
+    }
 
-    const statusMap = Array.isArray(statusGroups)
-      ? statusGroups.reduce((acc, curr) => {
-          if (curr && curr.status) {
-            const count = curr._count?._all ?? curr._count?.status ?? (typeof curr._count === "number" ? curr._count : 0);
-            acc[curr.status] = count;
+    // Parse user roles & compute total users + organizers
+    let totalUsers = 0;
+    let totalOrganizers = 0;
+    if (Array.isArray(userGroups)) {
+      for (const item of userGroups) {
+        if (item) {
+          const count = item._count?._all ?? item._count?.role ?? (typeof item._count === "number" ? item._count : 0);
+          totalUsers += count;
+          const roleUpper = (item.role || "").toUpperCase();
+          if (roleUpper === "ORGANIZER" || roleUpper === "SUPER_ADMIN" || roleUpper === "ADMIN") {
+            totalOrganizers += count;
           }
-          return acc;
-        }, {})
-      : {};
+        }
+      }
+    }
+
+    const totalReviews = reviewStats?._count?._all ?? 0;
+    const avgRating = reviewStats?._avg?.rating ? reviewStats._avg.rating.toFixed(1) : "0.0";
 
     const pendingCount = statusMap["PENDING"] || 0;
     const underReviewCount = statusMap["UNDER_REVIEW"] || 0;
@@ -89,18 +132,17 @@ export async function GET(request) {
     const rejectionRate = totalApplications > 0 ? ((rejectedCount / totalApplications) * 100).toFixed(1) : "0.0";
     const verificationQueueSize = pendingCount + underReviewCount + needsInfoCount;
 
-    return NextResponse.json({
-      success: true,
+    const responseData = {
       stats: {
-        totalApplications: totalApplications || 0,
+        totalApplications,
         pendingCount,
         underReviewCount,
         approvedCount,
         rejectedCount,
         needsInfoCount,
         suspendedCount,
-        totalUsers: totalUsers || 0,
-        totalOrganizers: totalOrganizers || 0,
+        totalUsers,
+        totalOrganizers,
         activeEvents: activeEvents || 0,
         upcomingEvents: upcomingEvents || 0,
         completedEvents: completedEvents || 0,
@@ -110,11 +152,29 @@ export async function GET(request) {
         rejectionRate,
         verificationQueueSize,
         activeIncidentsCount: activeIncidentsCount || 0,
+        activeOpportunities: activeOpportunities || 0,
+        pendingOpportunityApplications: pendingJobApplications || 0,
         systemHealth,
       },
       recentActivity: recentActivity || [],
       pendingWorkItems: pendingWorkItems || [],
-    });
+    };
+
+    statsCache = responseData;
+    lastCacheTime = nowTimestamp;
+
+    return NextResponse.json(
+      {
+        success: true,
+        cached: false,
+        ...responseData,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=10, stale-while-revalidate=30",
+        },
+      }
+    );
   } catch (error) {
     if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN_PERMISSION") {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });

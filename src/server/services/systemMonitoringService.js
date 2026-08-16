@@ -45,15 +45,24 @@ export function calculateP95Latency() {
   return sorted[index] || sorted[sorted.length - 1];
 }
 
+let cachedHealth = null;
+let lastHealthCheckTime = 0;
+const HEALTH_CACHE_TTL_MS = 30_000;
+
 export async function getSystemHealthStatus() {
+  const now = Date.now();
+  if (cachedHealth && now - lastHealthCheckTime < HEALTH_CACHE_TTL_MS) {
+    return cachedHealth;
+  }
+
   const dbLatencyMs = await measureDatabaseLatency();
   const memory = getSystemMemoryMetrics();
   const p95LatencyMs = calculateP95Latency();
   const errorRatePct = totalRequests > 0 ? Math.round((errorRequests / totalRequests) * 10000) / 100 : 0;
 
-  const isHealthy = dbLatencyMs >= 0 && dbLatencyMs < 500 && memory.heapUsagePct < 90 && errorRatePct < 5;
+  const isHealthy = dbLatencyMs >= 0 && dbLatencyMs < 1000 && memory.heapUsagePct < 90 && errorRatePct < 5;
 
-  return {
+  cachedHealth = {
     status: isHealthy ? "HEALTHY" : "DEGRADED",
     dbStatus: dbLatencyMs >= 0 ? "CONNECTED" : "DISCONNECTED",
     dbLatencyMs,
@@ -63,6 +72,9 @@ export async function getSystemHealthStatus() {
     totalRequestsRecorded: totalRequests,
     timestamp: new Date().toISOString(),
   };
+  lastHealthCheckTime = now;
+
+  return cachedHealth;
 }
 
 export async function captureTelemetrySnapshot() {

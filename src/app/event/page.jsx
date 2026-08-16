@@ -1,11 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import TwinLayout from "@/components/layout/TwinLayout";
+import nextDynamic from "next/dynamic";
 import EventsExplorer from "@/components/explorer/EventsExplorer";
 import { mockEvents } from "@/lib/mockData";
-import RecommendedEvents from "@/components/event/RecommendedEvents";
 import { useUser } from "@/context/UserContext";
+
+const TwinLayout = nextDynamic(() => import("@/components/layout/TwinLayout"), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[500px] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
+
+const RecommendedEvents = nextDynamic(() => import("@/components/event/RecommendedEvents"), {
+  ssr: false,
+});
 
 export default function EventPage() {
   const { user } = useUser();
@@ -22,8 +34,6 @@ export default function EventPage() {
       if (data.success && Array.isArray(data.events)) {
         // If DB has events, use them; fallback to mock only if empty
         setAllEvents(data.events.length > 0 ? data.events : mockEvents);
-      } else {
-        setAllEvents(mockEvents);
       }
     } catch (err) {
       console.error("Failed to load events", err);
@@ -39,7 +49,9 @@ export default function EventPage() {
       localStorage.removeItem("onboarding_just_completed");
     }
 
-    loadEvents();
+    setTimeout(() => {
+      loadEvents();
+    }, 0);
   }, []);
 
   // Force scroll the page back to top whenever a student selects an event
@@ -71,7 +83,7 @@ export default function EventPage() {
     const params = new URLSearchParams(window.location.search);
     const initialId = params.get("id");
     if (initialId) {
-      setSelectedEventId(initialId);
+      setTimeout(() => setSelectedEventId(initialId), 0);
     }
 
     const hash = window.location.hash;
@@ -220,5 +232,3 @@ export default function EventPage() {
     </div>
   );
 }
-
-export const dynamic = "force-dynamic";

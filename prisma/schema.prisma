@@ -442,5 +442,49 @@ model CommunicationRecipient {
   @@index([adminReviewStatus])
 }
 
+model Opportunity {
+  id           String                   @id @default(cuid())
+  title        String
+  company      String
+  type         String                   @default("Full-time") // Internship, Bounty, Full-time, Freelance, Part-time, Contract
+  location     String                   @default("Remote")
+  salary       String?                  // e.g. "₹20/hr", "₹80k - ₹100k", "₹500 - ₹2000"
+  description  String
+  tags         String                   @default("[]") // JSON array string or comma separated
+  requirements String?
+  applyLink    String?
+  status       String                   @default("ACTIVE") // ACTIVE, PAUSED, CLOSED
+  featured     Boolean                  @default(false)
+  postedBy     String?                  // Admin ID or Organizer
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
 
+  applications OpportunityApplication[]
 
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model OpportunityApplication {
+  id            String      @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  userId        String?
+  fullName      String
+  email         String
+  phone         String?
+  role          String
+  message       String?
+  resumeName    String?
+  resumeUrl     String?
+  status        String      @default("PENDING") // PENDING, REVIEWING, SHORTLISTED, REJECTED, ACCEPTED
+  adminNotes    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([opportunityId])
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+}

@@ -17,7 +17,14 @@ export async function GET(request) {
     const cacheKey = `events:${includeArchived}:${typeFilter || ''}:${categoryFilter || ''}:${zoneFilter || ''}`;
     const cached = getCachedEvents(cacheKey);
     if (cached) {
-      return NextResponse.json({ success: true, events: cached, cached: true });
+      return NextResponse.json(
+        { success: true, events: cached, cached: true },
+        {
+          headers: {
+            "Cache-Control": "public, s-maxage=15, stale-while-revalidate=45",
+          },
+        }
+      );
     }
 
     const whereClause = {
@@ -76,10 +83,17 @@ export async function GET(request) {
 
     setCachedEvents(cacheKey, events);
 
-    return NextResponse.json({
-      success: true,
-      events,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        events,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=15, stale-while-revalidate=45",
+        },
+      }
+    );
   } catch (error) {
     console.error('Events API error:', error);
     return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });

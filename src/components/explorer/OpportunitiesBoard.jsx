@@ -1,98 +1,67 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { MapPin, DollarSign, ExternalLink, Search } from "lucide-react";
+import { MapPin, DollarSign, ExternalLink, Search, Loader2 } from "lucide-react";
 import OpportunityApplicationModal from "./OpportunityApplicationModal";
-
-const mockOpportunities = [
-  {
-    id: "opp-1",
-    title: "Frontend Developer Intern",
-    company: "NeonTech Labs",
-    type: "Internship",
-    location: "Remote",
-    salary: "₹20/hr",
-    description:
-      "Join our core frontend team to build next-gen interactive React and Next.js applications.",
-    tags: ["React", "Next.js", "Tailwind"],
-  },
-  {
-    id: "opp-2",
-    title: "Smart Contract Bounty",
-    company: "DeFi Protocols",
-    type: "Bounty",
-    location: "Remote",
-    salary: "₹500 - ₹2000",
-    description:
-      "Find and patch vulnerabilities in our new liquidity pool staking contract on Ethereum.",
-    tags: ["Solidity", "Security", "Web3"],
-  },
-  {
-    id: "opp-3",
-    title: "Junior Data Scientist",
-    company: "Quantum Analytics",
-    type: "Full-time",
-    location: "New York, NY",
-    salary: "₹80k - ₹100k",
-    description:
-      "Analyze large datasets and train predictive machine learning models for fintech clients.",
-    tags: ["Python", "PyTorch", "SQL"],
-  },
-  {
-    id: "opp-4",
-    title: "UI/UX Design Freelance",
-    company: "Creative Studios",
-    type: "Freelance",
-    location: "Hybrid",
-    salary: "₹40/hr",
-    description:
-      "Design a high-converting landing page and onboarding flow for a new consumer app.",
-    tags: ["Figma", "Prototyping", "User Research"],
-  },
-  {
-    id: "opp-5",
-    title: "Backend Engineering Intern",
-    company: "CloudScale Inc",
-    type: "Internship",
-    location: "San Francisco, CA",
-    salary: "₹25/hr",
-    description:
-      "Help scale our Go microservices handling millions of concurrent requests daily.",
-    tags: ["Go", "Kubernetes", "AWS"],
-  },
-];
+import { mockOpportunities } from "@/lib/mockData";
 
 export default function OpportunitiesBoard() {
+  const [opportunities, setOpportunities] = useState(mockOpportunities);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeType, setActiveType] = useState("All");
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const types = useMemo(() => {
-    const uniqueTypes = new Set(mockOpportunities.map((opp) => opp.type));
-    return ["All", ...Array.from(uniqueTypes)];
+  useEffect(() => {
+    let isMounted = true;
+    async function loadOpportunities() {
+      try {
+        const res = await fetch("/api/opportunities");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.success && Array.isArray(data.data) && data.data.length > 0) {
+            setOpportunities(data.data);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading opportunities:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadOpportunities();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  const types = useMemo(() => {
+    const uniqueTypes = new Set(opportunities.map((opp) => opp.type));
+    return ["All", ...Array.from(uniqueTypes)];
+  }, [opportunities]);
+
   const filteredOpportunities = useMemo(() => {
-    return mockOpportunities.filter((opp) => {
+    return opportunities.filter((opp) => {
       const matchType = activeType === "All" || opp.type === activeType;
       const matchText = searchQuery.toLowerCase().trim();
+      const tagsList = Array.isArray(opp.tags) ? opp.tags : [];
       const matchSearch =
-        opp.title.toLowerCase().includes(matchText) ||
-        opp.company.toLowerCase().includes(matchText) ||
-        opp.description.toLowerCase().includes(matchText) ||
-        opp.tags.some((tag) => tag.toLowerCase().includes(matchText));
+        opp.title?.toLowerCase().includes(matchText) ||
+        opp.company?.toLowerCase().includes(matchText) ||
+        opp.description?.toLowerCase().includes(matchText) ||
+        tagsList.some((tag) => tag.toLowerCase().includes(matchText));
       return matchType && matchSearch;
     });
-  }, [searchQuery, activeType]);
+  }, [opportunities, searchQuery, activeType]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.08,
       },
     },
   };
@@ -111,7 +80,7 @@ export default function OpportunitiesBoard() {
   };
 
   const getTypeStyle = (type) => {
-    switch (type.toLowerCase()) {
+    switch ((type || "").toLowerCase()) {
       case "internship":
         return "bg-[#A855F7]/10 text-[#C084FC] border border-[#A855F7]/20";
       case "freelance":
@@ -182,10 +151,12 @@ export default function OpportunitiesBoard() {
                 >
                   {opp.type}
                 </span>
-                <span className="text-[10px] font-mono text-white/50 flex items-center gap-1">
-                  <DollarSign className="h-3 w-3 text-emerald-400" />{" "}
-                  {opp.salary}
-                </span>
+                {opp.salary && (
+                  <span className="text-[10px] font-mono text-white/50 flex items-center gap-1">
+                    <DollarSign className="h-3 w-3 text-emerald-400" />{" "}
+                    {opp.salary}
+                  </span>
+                )}
               </div>
 
               <div className="space-y-1 mb-3">
@@ -197,37 +168,52 @@ export default function OpportunitiesBoard() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-mono mb-3">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span>{opp.location}</span>
-              </div>
+              {opp.location && (
+                <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-mono mb-3">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span>{opp.location}</span>
+                </div>
+              )}
 
-              <p className="text-[12px] text-white/45 leading-relaxed mb-4 flex-grow">
+              <p className="text-[12px] text-white/45 leading-relaxed mb-4 flex-grow line-clamp-4">
                 {opp.description}
               </p>
 
               <div className="space-y-3 mt-auto">
-                <div className="flex flex-wrap gap-2">
-                  {opp.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[9px] font-mono font-bold text-white/50 bg-white/5 border border-white/8 px-2 py-0.5 rounded"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                {Array.isArray(opp.tags) && opp.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {opp.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[9px] font-mono font-bold text-white/50 bg-white/5 border border-white/8 px-2 py-0.5 rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 <div className="pt-3 border-t border-white/6">
-                  <button
-                    className="btn-secondary w-full text-[12px]"
-                    onClick={() => {
-                      setSelectedOpportunity(opp);
-                      setIsModalOpen(true);
-                    }}
-                  >
-                    Apply Now <ExternalLink className="h-3 w-3" />
-                  </button>
+                  {opp.applyLink ? (
+                    <a
+                      href={opp.applyLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-secondary w-full text-[12px] flex items-center justify-center gap-1.5"
+                    >
+                      Apply on Website <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <button
+                      className="btn-secondary w-full text-[12px] flex items-center justify-center gap-1.5"
+                      onClick={() => {
+                        setSelectedOpportunity(opp);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      Apply Now <ExternalLink className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>

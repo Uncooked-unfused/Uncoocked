@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import Link from "next/link";
-import TicketModal from "@/components/event/TicketModal";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { mergeWithMockEvents } from "@/lib/mockData";
 import {
@@ -27,6 +27,10 @@ import {
 } from "lucide-react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import Image from "next/image";
+
+const TicketModal = dynamic(() => import("@/components/event/TicketModal"), {
+  ssr: false,
+});
 
 // getInitialHostedEvents is obsolete, handled by seed or empty start
 
@@ -83,11 +87,21 @@ export default function DashboardPage() {
     if (typeof window !== "undefined" && user) {
       try {
         setLoading(true);
-        // 1. Fetch Events from Backend
-        const res = await fetch("/api/events?includeArchived=true");
-        const data = await res.json();
 
-        const fetchedEvents = Array.isArray(data?.events) ? data.events : [];
+        // Fetch events, registrations, and host status concurrently in parallel
+        const [resEvents, resReg, hostRes] = await Promise.all([
+          fetch("/api/events?includeArchived=true"),
+          fetch(`/api/registrations?email=${encodeURIComponent(user)}`),
+          fetch("/api/host/status"),
+        ]);
+
+        const [dataEvents, regData, hostData] = await Promise.all([
+          resEvents.ok ? resEvents.json() : { events: [] },
+          resReg.ok ? resReg.json() : { success: false },
+          hostRes.ok ? hostRes.json() : null,
+        ]);
+
+        const fetchedEvents = Array.isArray(dataEvents?.events) ? dataEvents.events : [];
 
         // Merge DB events with the mock fallback (deduped by id), then format.
         const combinedEvents = mergeWithMockEvents(fetchedEvents).map((ev) => {
@@ -108,22 +122,20 @@ export default function DashboardPage() {
         const hosted = combinedEvents.filter((ev) => ev.organizer?.email === user || ev.organizerId === user);
         setHostedEvents(hosted);
 
-        // 2. Fetch user's registrations from API
-        const resReg = await fetch(`/api/registrations?email=${user}`);
-        const regData = await resReg.json();
-        if (regData.success) {
-          setRegistrations(regData.registrations.map(r => ({
-            ...r,
-            email: r.user.email,
-            name: r.user.name,
-            ts: new Date(r.registeredAt).getTime()
-          })));
+        // Set user registrations
+        if (regData.success && Array.isArray(regData.registrations)) {
+          setRegistrations(
+            regData.registrations.map((r) => ({
+              ...r,
+              email: r.user?.email || user,
+              name: r.user?.name || user,
+              ts: new Date(r.registeredAt).getTime(),
+            }))
+          );
         }
 
-        // 3. Fetch user's host verification status
-        const hostRes = await fetch("/api/host/status");
-        if (hostRes.ok) {
-          const hostData = await hostRes.json();
+        // Set user host verification status
+        if (hostData) {
           const isVerified =
             hostData.userRole === "SUPER_ADMIN" ||
             (hostData.userRole === "ORGANIZER" && hostData.application?.status === "APPROVED");
@@ -135,7 +147,6 @@ export default function DashboardPage() {
             userRole: hostData.userRole,
           });
         }
-
       } catch (err) {
         console.error("Dashboard Load Error:", err);
       } finally {

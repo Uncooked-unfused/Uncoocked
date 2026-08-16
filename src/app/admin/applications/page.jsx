@@ -18,6 +18,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+
 function ApplicationsQueueContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,6 +27,7 @@ function ApplicationsQueueContent() {
   const currentStatus = searchParams.get("status") || "ALL";
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState("createdAt_desc");
@@ -48,8 +51,8 @@ function ApplicationsQueueContent() {
   }, [search]);
 
   // Fetch Applications Queue
-  const fetchApplications = useCallback(async () => {
-    setLoading(true);
+  const fetchApplications = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
       const query = new URLSearchParams();
       if (currentStatus !== "ALL") query.set("status", currentStatus);
@@ -58,21 +61,27 @@ function ApplicationsQueueContent() {
       query.set("page", page.toString());
       query.set("limit", "10");
 
-      const res = await fetch(`/api/admin/applications?${query.toString()}`);
-      const result = await res.json();
+      const url = `/api/admin/applications?${query.toString()}`;
+      const result = await fetchWithClientCache(url, {
+        bypassCache: isManualRefresh,
+        ttl: 15_000,
+      });
 
-      if (res.ok) {
-        setApplications(result.data || []);
-        if (result.pagination) {
-          setTotalPages(result.pagination.totalPages || 1);
-          setTotalCount(result.pagination.total || 0);
+      if (result.success && result.data) {
+        setApplications(result.data.data || []);
+        if (result.data.pagination) {
+          setTotalPages(result.data.pagination.totalPages || 1);
+          setTotalCount(result.data.pagination.total || 0);
         }
+      } else if (!result.fromCache) {
+        toast.error("Failed to load applications queue");
       }
     } catch (err) {
       console.error("Failed to fetch applications:", err);
       toast.error("Failed to load applications queue");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [currentStatus, debouncedSearch, sortBy, page]);
 
@@ -124,10 +133,13 @@ function ApplicationsQueueContent() {
 
       if (res.ok && data.success) {
         toast.success(`Successfully processed ${data.processed} applications!`);
+        invalidateClientCache("/api/admin/applications");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
         setSelectedIds([]);
         setBatchActionModal(null);
         setBatchNotes("");
-        fetchApplications();
+        fetchApplications(true);
       } else {
         toast.error(`Batch process failed: ${data.error || res.statusText}`);
       }
@@ -184,10 +196,12 @@ function ApplicationsQueueContent() {
         </div>
 
         <button
-          onClick={fetchApplications}
-          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-3.5 py-2 rounded-lg border border-neutral-800 transition flex items-center gap-2"
+          onClick={() => fetchApplications(true)}
+          disabled={isRefreshing}
+          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-3.5 py-2 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh Queue
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+          {isRefreshing ? "Refreshing..." : "Refresh Queue"}
         </button>
       </div>
 

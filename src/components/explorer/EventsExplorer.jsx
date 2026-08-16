@@ -226,7 +226,7 @@ export default function EventsExplorer({
           animate="show"
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          {filteredEvents.map((ev) => (
+          {filteredEvents.map((ev, index) => (
             <motion.div
               key={ev.id}
               variants={cardVariants}
@@ -241,6 +241,7 @@ export default function EventsExplorer({
                     src={ev.bannerUrl}
                     alt={ev.title}
                     fill
+                    priority={index < 3}
                     sizes="(max-width: 768px) 100vw, 400px"
                     className="object-cover transition-transform duration-300 group-hover:scale-105 opacity-80 group-hover:opacity-100"
                   />

@@ -25,6 +25,7 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
 
 export default function AdminCommunicationsPage() {
   const [activeTab, setActiveTab] = useState("responses"); // 'responses' | 'compose' | 'outbox'
@@ -73,7 +74,7 @@ export default function AdminCommunicationsPage() {
   const [sending, setSending] = useState(false);
 
   // Fetch responses with status, type, and search filters
-  const fetchResponses = useCallback(async () => {
+  const fetchResponses = useCallback(async (bypassCache = false) => {
     try {
       setResponsesLoading(true);
       const params = new URLSearchParams();
@@ -81,21 +82,17 @@ export default function AdminCommunicationsPage() {
       if (typeFilter !== "ALL") params.append("type", typeFilter);
       if (searchQuery.trim()) params.append("search", searchQuery.trim());
 
-      const res = await fetch(`/api/admin/communications/responses?${params.toString()}`);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        if (res.status === 403) {
-          toast.error("Super Admin authorization required to view submissions.");
-        } else {
-          console.warn("Failed to load user responses:", errorData.error);
-        }
-        return;
-      }
+      const url = `/api/admin/communications/responses?${params.toString()}`;
+      const result = await fetchWithClientCache(url, {
+        bypassCache,
+        ttl: 15_000,
+      });
 
-      const data = await res.json();
-      if (data.success) {
-        setResponses(data.items || []);
-        if (data.stats) setResponseStats(data.stats);
+      if (result.success && result.data?.success) {
+        setResponses(result.data.items || []);
+        if (result.data.stats) setResponseStats(result.data.stats);
+      } else if (!result.fromCache && result.error) {
+        console.warn("Failed to load user responses:", result.error);
       }
     } catch (err) {
       console.error("Error loading responses:", err);
@@ -105,13 +102,16 @@ export default function AdminCommunicationsPage() {
   }, [statusFilter, typeFilter, searchQuery]);
 
   // Fetch outbox campaigns
-  const fetchCampaigns = useCallback(async () => {
+  const fetchCampaigns = useCallback(async (bypassCache = false) => {
     try {
       setCampaignsLoading(true);
-      const res = await fetch("/api/admin/communications");
-      const data = await res.json();
-      if (data.success) {
-        setCampaigns(data.items || []);
+      const url = "/api/admin/communications";
+      const result = await fetchWithClientCache(url, {
+        bypassCache,
+        ttl: 15_000,
+      });
+      if (result.success && result.data?.success) {
+        setCampaigns(result.data.items || []);
       }
     } catch (err) {
       console.error("Error loading campaigns:", err);
@@ -249,6 +249,7 @@ export default function AdminCommunicationsPage() {
 
       if (res.ok && data.success) {
         toast.success(data.message || "Communication dispatched successfully!");
+        invalidateClientCache("/api/admin/communications");
         // Reset form
         setSubject("");
         setMessage("");
@@ -258,7 +259,7 @@ export default function AdminCommunicationsPage() {
         setSelectedUsers([]);
         setUserSearchTerm("");
         setActiveTab("responses");
-        fetchResponses();
+        fetchResponses(true);
       } else {
         toast.error(data.error || "Failed to dispatch communication");
       }
@@ -297,8 +298,9 @@ export default function AdminCommunicationsPage() {
 
       if (res.ok && data.success) {
         toast.success("Review status updated successfully");
+        invalidateClientCache("/api/admin/communications/responses");
         setReviewModalOpen(false);
-        fetchResponses();
+        fetchResponses(true);
       } else {
         toast.error(data.error || "Failed to update review");
       }
@@ -448,7 +450,7 @@ export default function AdminCommunicationsPage() {
                 ))}
 
                 <button
-                  onClick={fetchResponses}
+                  onClick={() => fetchResponses(true)}
                   className="p-2 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800 transition cursor-pointer"
                   title="Refresh responses"
                 >
@@ -1145,7 +1147,7 @@ export default function AdminCommunicationsPage() {
               <span>Sent Communications History</span>
             </h2>
             <button
-              onClick={fetchCampaigns}
+              onClick={() => fetchCampaigns(true)}
               className="p-2 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800 transition cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${campaignsLoading ? "animate-spin" : ""}`} />

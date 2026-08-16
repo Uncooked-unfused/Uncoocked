@@ -58,6 +58,9 @@ export default function OpportunityApplicationModal({
       formData.append("opportunityCompany", opportunity?.company || "");
       formData.append("opportunityType", opportunity?.type || "");
       formData.append("opportunityLocation", opportunity?.location || "");
+      if (opportunity?.id) {
+        formData.append("opportunityId", opportunity.id);
+      }
       if (resume) {
         formData.append("resume", resume);
       }
