@@ -85,6 +85,10 @@ export default function TwinLayout({ event, onBack, chatUserData, selectedEventI
   }, [event.id, user, event.organizer, event.organizerId, isCurrentlyHosting]);
 
   async function handleRegister(payload) {
+    if ((event.status || "").toLowerCase() === "completed") {
+      toast.error("This event has concluded. Registration is closed.");
+      return;
+    }
     if (isCurrentlyHosting) {
       toast.error("Hosts are structurally restricted from registering for their own events.");
       return;

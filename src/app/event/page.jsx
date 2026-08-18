@@ -31,9 +31,10 @@ export default function EventPage() {
       setLoading(true);
       const res = await fetch("/api/events", { cache: "no-store" });
       const data = await res.json();
-      if (data.success && Array.isArray(data.events)) {
-        // If DB has events, use them; fallback to mock only if empty
-        setAllEvents(data.events.length > 0 ? data.events : mockEvents);
+      if (data.success && Array.isArray(data.events) && data.events.length > 0) {
+        setAllEvents(data.events);
+      } else {
+        setAllEvents(mockEvents);
       }
     } catch (err) {
       console.error("Failed to load events", err);
