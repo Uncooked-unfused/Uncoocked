@@ -45,6 +45,7 @@ export async function getRecommendedEvents(userEmail) {
   let events = await prisma.event.findMany({
     where: {
       archived: false,
+      status: { notIn: ["Completed", "completed"] },
       id: { notIn: Array.from(registeredEventIds) },
     },
   });
@@ -52,20 +53,27 @@ export async function getRecommendedEvents(userEmail) {
   // Plan: fall back to canonical mock events when the database has none
   // (e.g. before seeding), so the recommendation section stays populated.
   if (events.length === 0) {
-    events = mockEvents.map((m) => ({
-      id: m.id,
-      title: m.title,
-      type: m.type,
-      category: m.category,
-      description: m.description,
-      bannerUrl: m.bannerUrl,
-      location: m.location,
-      popularityScore: m.popularityScore || 0,
-      tags: JSON.stringify(m.tags || []),
-      keywords: JSON.stringify(m.keywords || []),
-      date: new Date(m.dateISO),
-      archived: m.archived ?? false,
-    }));
+    events = mockEvents
+      .filter(
+        (m) =>
+          !m.archived &&
+          (m.status || "").toLowerCase() !== "completed" &&
+          !registeredEventIds.has(m.id)
+      )
+      .map((m) => ({
+        id: m.id,
+        title: m.title,
+        type: m.type,
+        category: m.category,
+        description: m.description,
+        bannerUrl: m.bannerUrl,
+        location: m.location,
+        popularityScore: m.popularityScore || 0,
+        tags: JSON.stringify(m.tags || []),
+        keywords: JSON.stringify(m.keywords || []),
+        date: new Date(m.dateISO),
+        archived: m.archived ?? false,
+      }));
   }
 
   const userInterests = user && user.interests ? safeJsonArray(user.interests) : [];
