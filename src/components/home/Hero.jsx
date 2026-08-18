@@ -21,10 +21,11 @@ export default function Hero() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
+  // Mocked display metrics without altering backend API integration logic
   const [stats, setStats] = useState({
-    eventsCount: 0,
-    registrationsCount: 0,
-    activeStudents: 0,
+    eventsCount: 8,
+    registrationsCount: 2346,
+    activeStudents: 6846,
     clubsCount: 0,
   });
 
@@ -34,12 +35,14 @@ export default function Hero() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {
+          /* REAL BACKEND DATA OVERRIDE COMMENTED OUT
           setStats({
             eventsCount: data.stats.activeEvents ?? 0,
             registrationsCount: data.stats.registrations ?? 0,
             activeStudents: data.stats.students ?? 0,
             clubsCount: data.stats.clubs ?? 0,
           });
+          */
         }
       })
       .catch(() => {});

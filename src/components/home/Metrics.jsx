@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, Calendar, Award, CheckCircle } from "lucide-react";
+import { Users, Calendar, CheckCircle } from "lucide-react";
 import CountUp from "@/components/ui/CountUp";
 
 export default function Metrics() {
+  // Mocked metrics state
   const [counts, setCounts] = useState({
-    students: 0,
-    activeEvents: 0,
-    clubs: 0,
-    registrations: 0,
+    students: 6846,
+    activeEvents: 8,
+    registrations: 2346,
   });
 
   useEffect(() => {
@@ -19,7 +19,13 @@ export default function Metrics() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {
-          setCounts(data.stats);
+          /* REAL BACKEND DATA OVERRIDE COMMENTED OUT
+          setCounts({
+            students: data.stats.students ?? 0,
+            activeEvents: data.stats.activeEvents ?? 0,
+            registrations: data.stats.registrations ?? 0,
+          });
+          */
         }
       })
       .catch(() => {});
@@ -47,14 +53,6 @@ export default function Metrics() {
     },
     {
       id: 3,
-      name: "Clubs & Societies",
-      value: counts.clubs,
-      suffix: "",
-      icon: Award,
-      desc: "Active student clubs & organizations",
-    },
-    {
-      id: 4,
       name: "Total Registrations",
       value: counts.registrations,
       suffix: "",
@@ -64,9 +62,10 @@ export default function Metrics() {
   ];
 
   return (
-    <section className="pt-12 pb-4 relative">
+    <section className="pt-12 pb-4 relative w-full">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Responsive 3-column grid for consistent UI across mobile and desktop */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
