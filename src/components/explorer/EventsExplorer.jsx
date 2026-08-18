@@ -120,7 +120,7 @@ export default function EventsExplorer({
   };
 
   const getTypeStyle = (type) => {
-    switch (type.toLowerCase()) {
+    switch ((type || "").toLowerCase()) {
       case "hackathon":
         return "bg-[#A855F7]/10 text-[#C084FC] border border-[#A855F7]/20";
       case "fest":
@@ -133,6 +133,13 @@ export default function EventsExplorer({
         return "bg-blue-500/10 text-blue-400 border border-blue-500/20";
       case "workshop":
         return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+      case "mun":
+      case "model united nations":
+        return "bg-sky-500/10 text-sky-400 border border-sky-500/20";
+      case "competition":
+        return "bg-rose-500/10 text-rose-400 border border-rose-500/20";
+      case "seminar":
+        return "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20";
       default:
         return "bg-white/5 text-white/50 border border-white/10";
     }

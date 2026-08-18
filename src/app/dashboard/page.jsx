@@ -55,6 +55,10 @@ const BANNER_PRESETS = [
     name: "Meetup",
     url: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&auto=format&fit=crop&q=60",
   },
+  {
+    name: "MUN",
+    url: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=60",
+  },
 ];
 
 export default function DashboardPage() {

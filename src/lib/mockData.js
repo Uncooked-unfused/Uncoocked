@@ -290,6 +290,61 @@ export const mockEvents = [
     status: "Active",
     archived: false,
   },
+  {
+    id: "lucknow-mun-2026",
+    bannerUrl:
+      "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=60",
+    title: "Lucknow Youth Model United Nations (MUN) 2026",
+    type: "MUN",
+    category: "Debate & Diplomacy",
+    date: "September 19-20, 2026",
+    dateISO: "2026-09-19",
+    location: "Senate Hall, Lucknow University",
+    zone: "Hazratganj",
+    city: "Lucknow",
+    state: "Uttar Pradesh",
+    country: "India",
+    description:
+      "Join student delegates across the country to debate global affairs, draft UN resolutions, and master international diplomacy.",
+    schedule: `
+## Day 1 - Saturday, September 19
+- **9:00 AM** - Registration & Delegate Kit Distribution
+- **10:30 AM** - Opening Plenary & Keynote Address
+- **11:30 AM** - Committee Session 1: General Assembly & UNHRC
+- **2:00 PM** - Lunch & Informal Caucus
+- **3:30 PM** - Committee Session 2: Crisis Simulation
+- **6:00 PM** - Press Conference & Delegate Social
+
+## Day 2 - Sunday, September 20
+- **9:30 AM** - Committee Session 3: Resolution Drafting
+- **1:00 PM** - Working Lunch & Lobbying
+- **2:30 PM** - Voting & Passing of UN Resolutions
+- **4:30 PM** - Closing Ceremony & Best Delegate Awards
+    `,
+    prizePool: `
+## Best Delegate Awards & Cash Grants
+- **🥇 Best Delegate (UNGA & UNSC)** - ₹10,000 + Golden Gavel + Certificate
+- **🥈 High Commendation** - ₹5,000 + Trophy
+- **🌟 Special Mention & Best Delegation** - Certificates & Commendations
+    `,
+    bulletinUpdates: [
+      {
+        id: "u-mun-1",
+        date: "2026-08-15",
+        title: "Country Matrix Released",
+        content: "Country and committee allocations are now available for all registered delegates.",
+      },
+    ],
+    tags: ["mun", "diplomacy", "debate", "united nations", "leadership"],
+    keywords: ["un", "delegates", "committee", "resolutions", "politics"],
+    popularityScore: 92,
+    ticketType: "Paid",
+    price: 499.0,
+    capacity: 250,
+    waitlistEnabled: true,
+    status: "Active",
+    archived: false,
+  },
 ];
 
 // Merge DB events with the mock fallback, deduping by id (DB version wins,

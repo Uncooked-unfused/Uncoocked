@@ -31,6 +31,9 @@ const getTypeStyle = (type) => {
       return "bg-blue-500/10 text-blue-400 border border-blue-500/20";
     case "workshop":
       return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+    case "mun":
+    case "model united nations":
+      return "bg-sky-500/10 text-sky-400 border border-sky-500/20";
     default:
       return "bg-white/5 text-white/50 border border-white/10";
   }

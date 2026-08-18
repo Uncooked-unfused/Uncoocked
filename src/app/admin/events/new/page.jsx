@@ -23,6 +23,7 @@ const EVENT_TYPES = [
   "Festive Night",
   "Meetup",
   "Workshop",
+  "MUN",
   "Competition",
   "Seminar",
   "Other",
@@ -31,6 +32,7 @@ const EVENT_TYPES = [
 const PRESET_BANNERS = [
   { label: "Tech Hackathon", url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80" },
   { label: "College Fest", url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80" },
+  { label: "MUN / Conference", url: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&auto=format&fit=crop&q=80" },
   { label: "Workshop / Meetup", url: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&auto=format&fit=crop&q=80" },
   { label: "Concert / Party", url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80" },
 ];

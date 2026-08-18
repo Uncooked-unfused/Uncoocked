@@ -7,6 +7,8 @@ const VALID_EVENT_TYPES = [
   "Workshop",
   "Competition",
   "Seminar",
+  "MUN",
+  "Model United Nations",
   "Other",
 ];
 
