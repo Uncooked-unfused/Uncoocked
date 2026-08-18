@@ -34,6 +34,7 @@ export async function GET(request) {
               { description: { contains: search } },
               { category: { contains: search } },
               { location: { contains: search } },
+              { customOrganizerName: { contains: search } },
               { organizer: { name: { contains: search } } },
               { organizer: { email: { contains: search } } },
             ],
@@ -173,6 +174,10 @@ export async function POST(request) {
           popularityScore,
           status,
           archived,
+          customRegistrationCount:
+            sanitized.customRegistrationCount !== undefined ? sanitized.customRegistrationCount : null,
+          customOrganizerName:
+            sanitized.customOrganizerName !== undefined ? sanitized.customOrganizerName : null,
           organizerId,
         },
         include: {

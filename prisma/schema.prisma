@@ -72,6 +72,8 @@ model Event {
   waitlistEnabled Boolean          @default(false)
   archived        Boolean          @default(false)
   status          String           @default("Active") // Active or Completed
+  customRegistrationCount Int?
+  customOrganizerName     String?
   createdAt       DateTime         @default(now())
   
   organizerId     String?

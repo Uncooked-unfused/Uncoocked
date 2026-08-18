@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, ArrowRight, Bookmark, Sparkles } from "lucide-react";
 import Image from "next/image";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function RecommendedEvents({ userEmail, onSelectEvent }) {
   const [recommendations, setRecommendations] = useState([]);
@@ -148,7 +149,7 @@ export default function RecommendedEvents({ userEmail, onSelectEvent }) {
               <div className="flex items-center gap-2.5 text-[10px] text-white/40 font-mono mt-auto pt-2 border-t border-white/6">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  <span>{new Date(ev.date).toLocaleDateString()}</span>
+                  <span>{formatDate(ev.date)}</span>
                 </div>
                 <div className="flex items-center gap-1 truncate">
                   <MapPin className="h-3 w-3 shrink-0" />

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useBackNavigation } from "@/context/NavigationHistoryContext";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function RequestSubmissionPage({ params }) {
   const unwrappedParams = use(params);
@@ -191,7 +192,7 @@ export default function RequestSubmissionPage({ params }) {
               <div className="flex items-center gap-1.5 text-xs font-mono text-red-400 pt-1">
                 <Calendar className="w-3.5 h-3.5" />
                 <span>
-                  Submission Deadline: {new Date(comm.deadline).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                  Submission Deadline: {formatDate(comm.deadline)}
                 </span>
               </div>
             )}

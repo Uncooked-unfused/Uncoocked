@@ -10,7 +10,7 @@ export const mockEvents = [
     title: "Annual Cultural Fest 2026",
     type: "Fest",
     category: "Cultural Events",
-    date: "June 20-22, 2026",
+    date: "20/06/2026",
     dateISO: "2026-06-20",
     location: "Main Campus Arena",
     zone: "Gomti Nagar",
@@ -20,17 +20,17 @@ export const mockEvents = [
     description:
       "Inter-college cultural showcase. Compete in street plays, battle of bands, classical dance, and fashion shows.",
     schedule: `
-## Day 1 - Friday, June 20
+## Day 1 - 20/06/2026
 - **9:00 AM** - Registration & Inauguration Ceremony
 - **11:00 AM** - Folk Dance & Street Play Rounds
 - **6:00 PM** - Classical Music Solos
 
-## Day 2 - Saturday, June 21
+## Day 2 - 21/06/2026
 - **10:00 AM** - Choreography & Western Dance Rounds
 - **2:00 PM** - Fine Arts & Poetry Slams
 - **7:00 PM** - DJ Night & Rock Band Prelims
 
-## Day 3 - Sunday, June 22
+## Day 3 - 22/06/2026
 - **11:00 AM** - Fashion Show Finale
 - **3:00 PM** - Celebrity Guest Performance
 - **5:00 PM** - Valedictory & Awards Distribution
@@ -45,13 +45,13 @@ export const mockEvents = [
     bulletinUpdates: [
       {
         id: "u1",
-        date: "2026-06-16",
+        date: "16/06/2026",
         title: "Registration Deadline Extended!",
-        content: "Contingent registration is open until June 18th.",
+        content: "Contingent registration is open until 18/06/2026.",
       },
       {
         id: "u2",
-        date: "2026-06-15",
+        date: "15/06/2026",
         title: "Celebrity Guest Confirmed",
         content:
           "Rock star VIP guest lineup is locked for the final night performance!",
@@ -74,7 +74,7 @@ export const mockEvents = [
     title: "Campus Freshers Welcome Party",
     type: "Party",
     category: "Entertainment",
-    date: "July 15, 2026",
+    date: "15/07/2026",
     dateISO: "2026-07-15",
     location: "Campus Green Lawn",
     zone: "Hazratganj",
@@ -84,7 +84,7 @@ export const mockEvents = [
     description:
       "Join us for the official welcome mixer for incoming freshers. Live music, food courts, and network games.",
     schedule: `
-## Day 1 - Wednesday, July 15
+## Day 1 - 15/07/2026
 - **5:00 PM** - Entry & Freshers Identity Kit distribution
 - **6:00 PM** - Principal Welcoming Address
 - **6:30 PM** - Freshers Talent Hunt & Icebreakers
@@ -98,7 +98,7 @@ export const mockEvents = [
     bulletinUpdates: [
       {
         id: "u3",
-        date: "2026-06-16",
+        date: "16/06/2026",
         title: "Dress Code Announced",
         content: "The theme is Retro Neon. Come dressed in neon colors!",
       },
@@ -119,7 +119,7 @@ export const mockEvents = [
     title: "Grand Dandiya Festive Night 2026",
     type: "Festive Night",
     category: "Cultural Events",
-    date: "October 12, 2026",
+    date: "12/10/2026",
     dateISO: "2026-10-12",
     location: "Auditorium Hall, Main Campus",
     zone: "Aliganj",
@@ -129,7 +129,7 @@ export const mockEvents = [
     description:
       "Celebrate the festive season with traditional Garba, live orchestra, authentic food stalls, and prizes.",
     schedule: `
-## Day 1 - Monday, Oct 12
+## Day 1 - 12/10/2026
 - **6:00 PM** - Entry gates open & Dandiya sticks pickup
 - **6:30 PM** - Traditional Aarti & Diya Lighting
 - **7:00 PM** - Garba Circle 1 Begins
@@ -159,7 +159,7 @@ export const mockEvents = [
     title: "Generative AI & LLM Workshop",
     type: "Workshop",
     category: "AI & Machine Learning",
-    date: "July 2, 2026",
+    date: "02/07/2026",
     dateISO: "2026-07-02",
     location: "Tech Lab 102, Main Campus",
     zone: "Indira Nagar",
@@ -169,7 +169,7 @@ export const mockEvents = [
     description:
       "Learn prompt engineering, vector databases, embeddings, and building active AI agents with PyTorch.",
     schedule: `
-## Day 1 - Thursday, July 2
+## Day 1 - 02/07/2026
 - **10:00 AM** - Introduction to Transformers & LLMs
 - **12:00 PM** - Vector Database Setup (Pinecone/Chroma)
 - **2:00 PM** - Building an AI Agent from Scratch
@@ -197,7 +197,7 @@ export const mockEvents = [
     title: "Founder & Startup Meetup",
     type: "Meetup",
     category: "Startups",
-    date: "July 18, 2026",
+    date: "18/07/2026",
     dateISO: "2026-07-18",
     location: "Incubation Center, Campus",
     zone: "Vikas Nagar",
@@ -207,7 +207,7 @@ export const mockEvents = [
     description:
       "Connect with startup founders, exchange ideas, and network with active angel mentors and VC investors.",
     schedule: `
-## Day 1 - Saturday, July 18
+## Day 1 - 18/07/2026
 - **2:00 PM** - Networking & Coffee Mixer
 - **3:00 PM** - Panel: Fundraising in College
 - **4:30 PM** - 60-second Elevator Pitch Round
@@ -236,7 +236,7 @@ export const mockEvents = [
     title: "Campus Innovation Hackathon 2026",
     type: "Hackathon",
     category: "Programming",
-    date: "June 20-22, 2026",
+    date: "20/06/2026",
     dateISO: "2026-06-20",
     location: "Tech Hub Building, Main Campus",
     zone: "Gomti Nagar",
@@ -246,16 +246,16 @@ export const mockEvents = [
     description:
       "Build prototypes, join project teams, and pitch ideas for a ₹50k prize pool. All skill levels welcome.",
     schedule: `
-## Day 1 - Friday, June 20
+## Day 1 - 20/06/2026
 - **9:00 AM** - Registration & Breakfast
 - **10:00 AM** - Opening Keynote
 - **11:00 AM** - Team Formation & Hackathon Begins
 
-## Day 2 - Saturday, June 21
+## Day 2 - 21/06/2026
 - **8:00 AM** - Breakfast & Hacking Continues
 - **3:00 PM** - Mentor Office Hours
 
-## Day 3 - Sunday, June 22
+## Day 3 - 22/06/2026
 - **12:00 PM** - Hacking Ends
 - **2:00 PM** - Project Presentations
 - **4:00 PM** - Judging & Awards Ceremony
@@ -270,13 +270,13 @@ export const mockEvents = [
     bulletinUpdates: [
       {
         id: "u4",
-        date: "2026-06-16",
+        date: "16/06/2026",
         title: "Hackathon Registration Now Open!",
-        content: "Team registration is now live. Sign up by June 18th.",
+        content: "Team registration is now live. Sign up by 18/06/2026.",
       },
       {
         id: "u5",
-        date: "2026-06-15",
+        date: "15/06/2026",
         title: "Mentor List Released",
         content: "Meet our amazing panel of mentors from top tech companies.",
       },
@@ -297,7 +297,7 @@ export const mockEvents = [
     title: "Lucknow Youth Model United Nations (MUN) 2026",
     type: "MUN",
     category: "Debate & Diplomacy",
-    date: "September 19-20, 2026",
+    date: "19/09/2026",
     dateISO: "2026-09-19",
     location: "Senate Hall, Lucknow University",
     zone: "Hazratganj",
@@ -307,7 +307,7 @@ export const mockEvents = [
     description:
       "Join student delegates across the country to debate global affairs, draft UN resolutions, and master international diplomacy.",
     schedule: `
-## Day 1 - Saturday, September 19
+## Day 1 - 19/09/2026
 - **9:00 AM** - Registration & Delegate Kit Distribution
 - **10:30 AM** - Opening Plenary & Keynote Address
 - **11:30 AM** - Committee Session 1: General Assembly & UNHRC
@@ -315,7 +315,7 @@ export const mockEvents = [
 - **3:30 PM** - Committee Session 2: Crisis Simulation
 - **6:00 PM** - Press Conference & Delegate Social
 
-## Day 2 - Sunday, September 20
+## Day 2 - 20/09/2026
 - **9:30 AM** - Committee Session 3: Resolution Drafting
 - **1:00 PM** - Working Lunch & Lobbying
 - **2:30 PM** - Voting & Passing of UN Resolutions
@@ -330,7 +330,7 @@ export const mockEvents = [
     bulletinUpdates: [
       {
         id: "u-mun-1",
-        date: "2026-08-15",
+        date: "15/08/2026",
         title: "Country Matrix Released",
         content: "Country and committee allocations are now available for all registered delegates.",
       },

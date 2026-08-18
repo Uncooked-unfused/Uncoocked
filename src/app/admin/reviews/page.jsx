@@ -22,6 +22,7 @@ import {
   Calendar,
   CheckCircle2,
 } from "lucide-react";
+import { formatDate, formatDateTime } from "@/lib/dateUtils";
 
 import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
 
@@ -618,7 +619,7 @@ function ReviewsManagementContent() {
                     <td className="p-4">
                       <div className="font-mono text-gray-400 text-[11px] flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-gray-600" />
-                        {new Date(r.createdAt).toLocaleDateString()}
+                        {formatDate(r.createdAt)}
                       </div>
                       <span className="text-[9px] text-gray-600 font-mono">
                         {new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -715,7 +716,7 @@ function ReviewsManagementContent() {
               <div className="space-y-1">
                 <span className="text-gray-500 text-[10px] uppercase font-semibold block">Submitted At</span>
                 <span className="font-mono text-gray-300 text-[11px] block">
-                  {new Date(viewModal.createdAt).toLocaleString()}
+                  {formatDateTime(viewModal.createdAt)}
                 </span>
               </div>
             </div>

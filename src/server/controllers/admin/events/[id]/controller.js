@@ -129,6 +129,14 @@ export async function PUT(request, { params }) {
           popularityScore,
           status,
           archived,
+          customRegistrationCount:
+            sanitized.customRegistrationCount !== undefined
+              ? sanitized.customRegistrationCount
+              : existing.customRegistrationCount,
+          customOrganizerName:
+            sanitized.customOrganizerName !== undefined
+              ? sanitized.customOrganizerName
+              : existing.customOrganizerName,
           organizerId,
         },
         include: {
@@ -161,6 +169,77 @@ export async function PUT(request, { params }) {
     }
     console.error("PUT Admin Event Error:", error);
     return NextResponse.json({ error: "Failed to update event" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request, { params }) {
+  try {
+    const admin = await requireSuperAdmin(request);
+    const { id } = await params;
+    const rawData = await request.json();
+
+    const existing = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { registrations: true } },
+      },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    let newCount = null;
+    if (
+      rawData.customRegistrationCount !== null &&
+      rawData.customRegistrationCount !== "" &&
+      rawData.customRegistrationCount !== undefined
+    ) {
+      const parsed = parseInt(rawData.customRegistrationCount, 10);
+      if (isNaN(parsed) || parsed < 0 || parsed > 10000000) {
+        return NextResponse.json(
+          { error: "Custom registration count must be a non-negative number up to 10,000,000." },
+          { status: 400 }
+        );
+      }
+      newCount = parsed;
+    }
+
+    const [updatedEvent] = await prisma.$transaction([
+      prisma.event.update({
+        where: { id },
+        data: { customRegistrationCount: newCount },
+        include: {
+          organizer: {
+            select: { id: true, name: true, fullName: true, email: true, image: true, role: true },
+          },
+          _count: { select: { registrations: true } },
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          adminId: admin.id,
+          action: "EVENT_REGISTRATIONS_TWEAKED",
+          previousStatus: `Custom: ${existing.customRegistrationCount ?? "None"} (Real: ${existing._count.registrations})`,
+          newStatus: `Custom: ${newCount ?? "None"} (Real: ${existing._count.registrations})`,
+          reason: `Super Admin tweaked total registrations for "${existing.title}" (${id}) to ${newCount !== null ? newCount : "Real count (" + existing._count.registrations + ")"}`,
+        },
+      }),
+    ]);
+
+    invalidateEventsCache();
+
+    return NextResponse.json({
+      success: true,
+      data: updatedEvent,
+      message: `Total registrations updated to ${newCount !== null ? newCount : "Real (" + existing._count.registrations + ")"}.`,
+    });
+  } catch (error) {
+    if (error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
+    }
+    console.error("PATCH Admin Event Registrations Error:", error);
+    return NextResponse.json({ error: "Failed to tweak registrations" }, { status: 500 });
   }
 }
 

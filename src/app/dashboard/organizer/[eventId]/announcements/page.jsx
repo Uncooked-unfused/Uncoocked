@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { Megaphone, Plus, Trash2, Pin, Eye, EyeOff, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function AnnouncementsPage({ params }) {
   const unwrappedParams = use(params);
@@ -85,7 +86,7 @@ export default function AnnouncementsPage({ params }) {
           content: data.announcement.content,
           visibility: visibility,
           isPinned: false,
-          date: new Date(data.announcement.postedAt || Date.now()).toISOString().split("T")[0]
+          date: formatDate(data.announcement.postedAt || Date.now())
         };
         setAnnouncements(prev => [newAnn, ...prev]);
         setTitle("");
@@ -259,7 +260,7 @@ export default function AnnouncementsPage({ params }) {
               <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{ann.content}</p>
               
               <div className="mt-4 flex items-center gap-4 text-[10px] font-mono text-gray-500 border-t border-dark-border/40 pt-3">
-                <span>{ann.date}</span>
+                <span>{formatDate(ann.date || ann.postedAt || ann.createdAt)}</span>
                 <span className="flex items-center gap-1 bg-black px-2 py-0.5 rounded-full border border-dark-border">
                   {ann.visibility === 'All' ? <Eye className="w-3 h-3 text-neon-purple" /> : <EyeOff className="w-3 h-3 text-amber-500" />}
                   {ann.visibility}

@@ -3,7 +3,15 @@ import { prisma } from "@/server/db/prisma";
 
 export async function GET() {
   try {
-    const [studentsCount, activeEventsCount, registrationsCount, clubsGroup, approvedOrgs, departmentGroup] = await Promise.all([
+    const [
+      studentsCount,
+      activeEventsCount,
+      registrationsCount,
+      clubsGroup,
+      approvedOrgs,
+      departmentGroup,
+      eventsWithCustomCount,
+    ] = await Promise.all([
       prisma.user.count(),
       prisma.event.count({ where: { status: "Active", archived: false } }),
       prisma.registration.count(),
@@ -20,7 +28,23 @@ export async function GET() {
         _count: { department: true },
         where: { department: { not: null } },
       }),
+      prisma.event.findMany({
+        where: { customRegistrationCount: { not: null } },
+        select: {
+          id: true,
+          customRegistrationCount: true,
+          _count: { select: { registrations: true } },
+        },
+      }),
     ]);
+
+    let customRegistrationsDelta = 0;
+    for (const ev of eventsWithCustomCount) {
+      if (ev.customRegistrationCount !== null && ev.customRegistrationCount !== undefined) {
+        customRegistrationsDelta += ev.customRegistrationCount - (ev._count?.registrations || 0);
+      }
+    }
+    const totalEffectiveRegistrations = Math.max(0, registrationsCount + customRegistrationsDelta);
 
     const clubNames = new Set([
       ...clubsGroup.map((g) => g.clubAssociation?.trim()).filter(Boolean),
@@ -32,7 +56,7 @@ export async function GET() {
       stats: {
         students: studentsCount,
         activeEvents: activeEventsCount,
-        registrations: registrationsCount,
+        registrations: totalEffectiveRegistrations,
         clubs: clubNames.size,
         departments: departmentGroup.map((d) => ({
           name: d.department,

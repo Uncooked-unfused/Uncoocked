@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function ReviewSection() {
   const { user } = useUser();
@@ -147,7 +148,7 @@ export default function ReviewSection() {
                   
                   <div className="text-[8px] text-white/30 font-mono border-t border-white/4 pt-1.5 mt-2 flex justify-between items-center">
                     <span>STATUS // VERIFIED</span>
-                    <span>{new Date(rev.createdAt).toLocaleDateString()}</span>
+                    <span>{formatDate(rev.createdAt)}</span>
                   </div>
                 </div>
               ))

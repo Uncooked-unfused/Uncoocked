@@ -23,10 +23,19 @@ export async function GET(request, context) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
+    const effectiveRegistrations =
+      event.customRegistrationCount !== null && event.customRegistrationCount !== undefined
+        ? event.customRegistrationCount
+        : (event._count?.registrations || 0);
+
     const sanitizedEvent = {
       ...event,
       category: event.category || event.type,
       bannerUrl: event.bannerUrl,
+      _count: {
+        ...event._count,
+        registrations: effectiveRegistrations,
+      },
     };
 
     return NextResponse.json({ success: true, event: sanitizedEvent });
@@ -79,6 +88,7 @@ export async function PUT(request, context) {
     if (data.zone !== undefined) updateData.zone = sanitized.zone;
     if (data.tags !== undefined) updateData.tags = sanitized.tags;
     if (data.keywords !== undefined) updateData.keywords = sanitized.keywords;
+    if (data.customOrganizerName !== undefined) updateData.customOrganizerName = sanitized.customOrganizerName;
 
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },

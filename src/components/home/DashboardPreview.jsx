@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, Users, Send, CheckCircle, Settings, Terminal } from "lucide-react";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function DashboardPreview() {
   const [events, setEvents] = useState([]);
@@ -72,7 +73,7 @@ export default function DashboardPreview() {
                       <div key={ev.id || idx} className="flex items-center justify-between p-3 bg-[#111111] border border-white/6 rounded-lg hover:border-white/12 transition-colors duration-150">
                         <div>
                           <span className="block text-[11px] font-semibold text-white/80">{ev.title}</span>
-                          <span className="text-[10px] text-white/30 mt-0.5 block">{ev.location} · {new Date(ev.date).toLocaleDateString()}</span>
+                          <span className="text-[10px] text-white/30 mt-0.5 block">{ev.location} · {formatDate(ev.date)}</span>
                         </div>
                         <span className="text-[10px] border px-2 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{ev.status || "Active"}</span>
                       </div>

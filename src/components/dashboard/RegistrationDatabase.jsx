@@ -13,6 +13,7 @@ import {
   Calendar,
   Clock,
 } from "lucide-react";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function RegistrationDatabase() {
   const [registrations, setRegistrations] = useState([]);
@@ -331,7 +332,7 @@ export default function RegistrationDatabase() {
                                   </div>
                                   <p className="text-white pl-5">
                                     {reg.ts
-                                      ? new Date(reg.ts).toLocaleDateString()
+                                      ? formatDate(reg.ts)
                                       : "—"}
                                   </p>
                                 </div>

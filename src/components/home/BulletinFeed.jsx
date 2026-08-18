@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Bell, Terminal } from "lucide-react";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function BulletinFeed() {
   const [bulletins, setBulletins] = useState([]);
@@ -18,7 +19,7 @@ export default function BulletinFeed() {
               ev.bulletinUpdates.forEach((bu) => {
                 updates.push({
                   text: `📢 ${ev.title}: ${bu.title} - ${bu.content}`,
-                  time: bu.date || bu.postedAt ? new Date(bu.postedAt || bu.date).toLocaleDateString() : "Recent",
+                  time: bu.date || bu.postedAt ? formatDate(bu.postedAt || bu.date) : "Recent",
                 });
               });
             }
@@ -29,7 +30,7 @@ export default function BulletinFeed() {
             // Generate clean dynamic updates directly from live events
             const derived = data.events.slice(0, 4).map((ev) => ({
               text: `📢 ${ev.title}: Registrations active for campus students`,
-              time: ev.date ? new Date(ev.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Upcoming",
+              time: ev.date ? formatDate(ev.date) : "Upcoming",
             }));
             setBulletins(derived);
           }

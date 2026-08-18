@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Search, Calendar, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { LUCKNOW_ZONES } from "@/config/cities";
+import { formatDate } from "@/lib/dateUtils";
 
 export default function EventsExplorer({
   events,
@@ -27,9 +28,6 @@ export default function EventsExplorer({
     });
     return ["All", ...Array.from(set)];
   }, [events]);
-
-  // Current time captured in state to keep memo pure
-  const [now] = useState(() => Date.now());
 
   const handleHostClick = async () => {
     try {
@@ -69,7 +67,10 @@ export default function EventsExplorer({
         (ev.category && ev.category.toLowerCase().includes(matchText)) ||
         (ev.description && ev.description.toLowerCase().includes(matchText)) ||
         (ev.location && ev.location.toLowerCase().includes(matchText)) ||
-        (ev.zone && ev.zone.toLowerCase().includes(matchText));
+        (ev.zone && ev.zone.toLowerCase().includes(matchText)) ||
+        (ev.customOrganizerName && ev.customOrganizerName.toLowerCase().includes(matchText)) ||
+        (ev.organizer?.name && ev.organizer.name.toLowerCase().includes(matchText)) ||
+        (ev.organizer?.fullName && ev.organizer.fullName.toLowerCase().includes(matchText));
       return matchCategory && matchZone && matchSearch;
     });
 
@@ -77,9 +78,8 @@ export default function EventsExplorer({
     const completed = [];
 
     list.forEach((ev) => {
-      const isPast = new Date(ev.date).getTime() < now;
-      const isMarkedCompleted = ev.status === "Completed";
-      if (isMarkedCompleted || isPast) {
+      const isMarkedCompleted = (ev.status || "").toLowerCase() === "completed";
+      if (isMarkedCompleted) {
         completed.push(ev);
       } else {
         upcoming.push(ev);
@@ -93,7 +93,7 @@ export default function EventsExplorer({
     completed.sort((a, b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
 
     return { upcomingEvents: upcoming, completedEvents: completed };
-  }, [events, searchQuery, activeCategory, activeZone, now]);
+  }, [events, searchQuery, activeCategory, activeZone]);
 
   // Framer Motion staggered transition configurations
   const containerVariants = {
@@ -308,7 +308,7 @@ export default function EventsExplorer({
                   <div className="flex items-center justify-between border-t border-white/6 pt-3 mt-auto">
                     <div className="flex items-center gap-1.5 text-white/40 font-mono text-[10px]">
                       <Calendar className="h-3 w-3 shrink-0" />
-                      <span>{ev.date}</span>
+                      <span>{formatDate(ev.date || ev.dateISO)}</span>
                     </div>
                     
                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/60 group-hover:text-white transition-colors">
@@ -408,7 +408,7 @@ export default function EventsExplorer({
                   <div className="flex items-center justify-between border-t border-white/6 pt-3 mt-auto">
                     <div className="flex items-center gap-1.5 text-white/40 font-mono text-[10px]">
                       <Calendar className="h-3 w-3 shrink-0" />
-                      <span>{ev.date}</span>
+                      <span>{formatDate(ev.date || ev.dateISO)}</span>
                     </div>
                     
                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 group-hover:text-blue-300 transition-colors">

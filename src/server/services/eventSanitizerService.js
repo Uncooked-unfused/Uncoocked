@@ -90,6 +90,29 @@ export function validateAndSanitizeEventData(data, isUpdate = false) {
     }
   }
 
+  let customRegistrationCount = undefined;
+  if (data.customRegistrationCount !== undefined) {
+    if (data.customRegistrationCount === null || data.customRegistrationCount === "") {
+      customRegistrationCount = null;
+    } else {
+      const parsedCustom = parseInt(data.customRegistrationCount, 10);
+      if (isNaN(parsedCustom) || parsedCustom < 0 || parsedCustom > 10000000) {
+        errors.push("Custom registrations must be a non-negative number.");
+      } else {
+        customRegistrationCount = parsedCustom;
+      }
+    }
+  }
+
+  let customOrganizerName = undefined;
+  if (data.customOrganizerName !== undefined) {
+    if (data.customOrganizerName === null || data.customOrganizerName === "") {
+      customOrganizerName = null;
+    } else if (typeof data.customOrganizerName === "string") {
+      customOrganizerName = data.customOrganizerName.trim().slice(0, 120) || null;
+    }
+  }
+
   // Handle bannerUrl: Allow custom uploaded data URLs (up to 5MB) or standard image URLs
   let bannerUrl = typeof data.bannerUrl === "string" ? data.bannerUrl.trim() : "";
   if (bannerUrl.startsWith("data:image")) {
@@ -145,6 +168,8 @@ export function validateAndSanitizeEventData(data, isUpdate = false) {
       country: typeof data.country === "string" ? data.country.trim() : "India",
       tags: tagsStr,
       keywords: keywordsStr,
+      customRegistrationCount,
+      customOrganizerName,
     },
   };
 }

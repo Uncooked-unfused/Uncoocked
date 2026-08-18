@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+import { formatDate, formatDateTime } from "@/lib/dateUtils";
 
 export default function AdminCommunicationsPage() {
   const [activeTab, setActiveTab] = useState("responses"); // 'responses' | 'compose' | 'outbox'
@@ -617,12 +618,7 @@ export default function AdminCommunicationsPage() {
                           {/* Submitted At */}
                           <td className="px-5 py-4 text-neutral-400 text-[11px] font-mono whitespace-nowrap">
                             {resp.respondedAt ? (
-                              new Date(resp.respondedAt).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
+                              formatDateTime(resp.respondedAt)
                             ) : (
                               <span className="text-neutral-500">Pending</span>
                             )}
@@ -1220,7 +1216,7 @@ export default function AdminCommunicationsPage() {
                         )}
                       </td>
                       <td className="px-5 py-4 text-neutral-400 font-mono text-[11px]">
-                        {new Date(comm.createdAt).toLocaleDateString()}
+                        {formatDate(comm.createdAt)}
                       </td>
                       <td className="px-5 py-4 text-right">
                         <button

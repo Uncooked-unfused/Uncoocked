@@ -13,9 +13,12 @@ import {
   Plus,
   Edit3,
   CheckCircle2,
+  SlidersHorizontal,
+  Users,
 } from "lucide-react";
 
 import { fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+import { formatDate } from "@/lib/dateUtils";
 
 function EventModerationQueueContent() {
   const [events, setEvents] = useState([]);
@@ -34,6 +37,65 @@ function EventModerationQueueContent() {
   const [batchModal, setBatchModal] = useState(null); // { action: "SUSPEND" | "RESTORE" | "ARCHIVE" | "COMPLETE" }
   const [batchReason, setBatchReason] = useState("");
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+
+  // Tweak Registration Count State
+  const [tweakModal, setTweakModal] = useState(null); // { event, count: number | string }
+  const [tweakSubmitting, setTweakSubmitting] = useState(false);
+
+  const openTweakModal = (event) => {
+    setTweakModal({
+      event,
+      count:
+        event.customRegistrationCount !== null && event.customRegistrationCount !== undefined
+          ? event.customRegistrationCount
+          : (event._count?.registrations ?? 0),
+    });
+  };
+
+  const handleSaveTweak = async (e) => {
+    if (e) e.preventDefault();
+    if (!tweakModal?.event) return;
+    setTweakSubmitting(true);
+    try {
+      const rawVal = tweakModal.count;
+      const isReset = rawVal === "" || rawVal === null;
+      let parsedVal = null;
+      if (!isReset) {
+        parsedVal = parseInt(rawVal, 10);
+        if (isNaN(parsedVal) || parsedVal < 0 || parsedVal > 10000000) {
+          toast.error("Please enter a valid non-negative number up to 10,000,000");
+          setTweakSubmitting(false);
+          return;
+        }
+      }
+
+      const res = await fetch(`/api/admin/events/${tweakModal.event.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customRegistrationCount: parsedVal }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(
+          isReset
+            ? `Reset "${tweakModal.event.title}" to real database count (${tweakModal.event._count?.registrations || 0}).`
+            : `Updated registrations for "${tweakModal.event.title}" to ${parsedVal}.`
+        );
+        invalidateClientCache("/api/admin/events");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
+        invalidateClientCache("/api/events");
+        setTweakModal(null);
+        fetchEvents(true);
+      } else {
+        toast.error(data.error || "Failed to update registration count");
+      }
+    } catch (err) {
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setTweakSubmitting(false);
+    }
+  };
 
   // Search Debounce
   useEffect(() => {
@@ -359,11 +421,17 @@ function EventModerationQueueContent() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <p className="text-gray-200 font-semibold">{e.organizer?.name || e.organizer?.fullName || "N/A"}</p>
-                      <p className="text-[10px] text-gray-500 font-mono">{e.organizer?.email}</p>
+                      <p className="text-gray-200 font-semibold">{e.customOrganizerName || e.organizer?.name || e.organizer?.fullName || "N/A"}</p>
+                      {e.customOrganizerName ? (
+                        <p className="text-[10px] text-amber-400/90 font-mono flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" /> Custom Organizer
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-gray-500 font-mono">{e.organizer?.email || "No email"}</p>
+                      )}
                     </td>
                     <td className="p-4">
-                      <p className="text-gray-300 font-mono text-[11px]">{new Date(e.date).toLocaleDateString()}</p>
+                      <p className="text-gray-300 font-mono text-[11px]">{formatDate(e.date)}</p>
                       <p className="text-[10px] text-gray-500 truncate max-w-xs">{e.location}</p>
                     </td>
                     <td className="p-4">
@@ -379,9 +447,41 @@ function EventModerationQueueContent() {
                         {e.status}
                       </span>
                     </td>
-                    <td className="p-4 font-mono text-gray-300">{e._count?.registrations || 0}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col">
+                          <span className="font-mono text-white font-bold text-xs">
+                            {e.customRegistrationCount !== null && e.customRegistrationCount !== undefined
+                              ? e.customRegistrationCount
+                              : (e._count?.registrations || 0)}
+                          </span>
+                          {e.customRegistrationCount !== null && e.customRegistrationCount !== undefined && (
+                            <span
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-medium"
+                              title={`Real verified DB registrations: ${e._count?.registrations || 0}`}
+                            >
+                              Custom ({e._count?.registrations || 0} real)
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => openTweakModal(e)}
+                          title="Tweak registration count"
+                          className="p-1 hover:bg-neutral-800 rounded text-gray-400 hover:text-amber-400 transition"
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => openTweakModal(e)}
+                          title="Tweak total registrations count"
+                          className="bg-neutral-800 hover:bg-amber-500 hover:text-black text-amber-400 font-bold px-2 py-1.5 rounded transition text-[11px] inline-flex items-center gap-1 border border-neutral-700 cursor-pointer"
+                        >
+                          <SlidersHorizontal className="w-3 h-3" /> Tweak
+                        </button>
                         {e.status !== "Completed" ? (
                           <button
                             onClick={() => handleQuickStatusChange(e.id, "COMPLETE")}
@@ -445,6 +545,141 @@ function EventModerationQueueContent() {
           </div>
         )}
       </div>
+
+      {/* Tweak Total Registrations Modal */}
+      {tweakModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400 border border-amber-500/20">
+                  <SlidersHorizontal className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Tweak Total Registrations</h3>
+                  <p className="text-[11px] text-gray-400 line-clamp-1">{tweakModal.event.title}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setTweakModal(null)}
+                className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded-md hover:bg-neutral-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Event Stats Summary */}
+            <div className="grid grid-cols-2 gap-3 p-3 bg-black/60 rounded-xl border border-neutral-800/80 text-xs">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-500 block">Real DB Registrations</span>
+                <span className="font-mono font-bold text-emerald-400 text-sm">
+                  {tweakModal.event._count?.registrations || 0}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-500 block">Event Capacity</span>
+                <span className="font-mono font-bold text-white text-sm">
+                  {tweakModal.event.capacity || 0} attendees
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveTweak} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-300 block">
+                  Custom Registration Count <span className="text-gray-500 font-normal">(Display override)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10000000"
+                  value={tweakModal.count}
+                  onChange={(e) =>
+                    setTweakModal((prev) => ({ ...prev, count: e.target.value }))
+                  }
+                  placeholder="Enter total registrations count..."
+                  className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500 transition font-mono"
+                  autoFocus
+                />
+                <p className="text-[11px] text-gray-500">
+                  This custom count overrides the public displayed registration metric across event pages, search cards, and platform stats.
+                </p>
+              </div>
+
+              {/* Quick Presets */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] uppercase font-bold text-gray-500 block">Quick Presets</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[10, 50, 100, 250, 500].map((inc) => (
+                    <button
+                      key={inc}
+                      type="button"
+                      onClick={() => {
+                        const current = parseInt(tweakModal.count, 10) || 0;
+                        setTweakModal((prev) => ({ ...prev, count: current + inc }));
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-mono font-bold bg-neutral-800 hover:bg-neutral-700 text-gray-300 rounded border border-neutral-700/60 transition"
+                    >
+                      +{inc}
+                    </button>
+                  ))}
+                  {tweakModal.event.capacity && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTweakModal((prev) => ({ ...prev, count: tweakModal.event.capacity }))
+                      }
+                      className="px-2.5 py-1 text-[11px] font-bold bg-neutral-800 hover:bg-amber-500 hover:text-black text-amber-400 rounded border border-amber-500/30 transition"
+                    >
+                      Fill Capacity ({tweakModal.event.capacity})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setTweakModal((prev) => ({
+                        ...prev,
+                        count: tweakModal.event._count?.registrations || 0,
+                      }))
+                    }
+                    className="px-2.5 py-1 text-[11px] font-bold bg-neutral-800 hover:bg-emerald-600 hover:text-white text-emerald-400 rounded border border-emerald-500/30 transition"
+                  >
+                    Reset to Real ({tweakModal.event._count?.registrations || 0})
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-3 border-t border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTweakModal((prev) => ({ ...prev, count: "" }))
+                  }
+                  className="text-[11px] text-gray-400 hover:text-rose-400 underline"
+                >
+                  Clear Custom Override
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTweakModal(null)}
+                    className="px-3.5 py-2 text-xs font-bold bg-neutral-800 hover:bg-neutral-700 text-gray-300 rounded-lg transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={tweakSubmitting}
+                    className="px-4 py-2 text-xs font-extrabold bg-amber-500 hover:bg-amber-400 text-black rounded-lg transition disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {tweakSubmitting ? "Saving..." : "Save Tweak"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Batch Action Modal */}
       {batchModal && (

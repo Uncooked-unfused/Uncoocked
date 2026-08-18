@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   AlertCircle,
   Plus,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useBackNavigation } from "@/context/NavigationHistoryContext";
 import ImageCropper from "@/components/ui/ImageCropper";
@@ -57,6 +58,7 @@ export default function AdminNewEventPage() {
     ticketType: "Free",
     price: 0,
     capacity: 100,
+    customRegistrationCount: "",
     waitlistEnabled: true,
     status: "Active",
     archived: false,
@@ -68,6 +70,7 @@ export default function AdminNewEventPage() {
     tags: "",
     keywords: "",
     organizerId: "",
+    customOrganizerName: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -110,6 +113,13 @@ export default function AdminNewEventPage() {
         ...formData,
         price: parseFloat(formData.price) || 0,
         capacity: parseInt(formData.capacity, 10) || 100,
+        customRegistrationCount:
+          formData.customRegistrationCount !== "" &&
+          formData.customRegistrationCount !== null &&
+          formData.customRegistrationCount !== undefined
+            ? parseInt(formData.customRegistrationCount, 10)
+            : null,
+        customOrganizerName: formData.customOrganizerName?.trim() || null,
         popularityScore: parseFloat(formData.popularityScore) || 0,
         tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
         keywords: formData.keywords ? formData.keywords.split(",").map((k) => k.trim()).filter(Boolean) : [],
@@ -272,6 +282,20 @@ export default function AdminNewEventPage() {
                 value={formData.popularityScore}
                 onChange={handleChange}
                 className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500 font-mono transition"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-300 block">
+                Custom Organizer Name <span className="text-gray-500 font-normal text-[11px]">(e.g. CMS Station Road Campus, Club Name)</span>
+              </label>
+              <input
+                type="text"
+                name="customOrganizerName"
+                value={formData.customOrganizerName}
+                onChange={handleChange}
+                placeholder="e.g. CMS Station Road Campus MUN"
+                className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition"
               />
             </div>
 
@@ -461,6 +485,71 @@ export default function AdminNewEventPage() {
                 />
                 Enable Waitlist once capacity is reached
               </label>
+            </div>
+
+            {/* Custom Registrations Count Override */}
+            <div className="md:col-span-3 pt-4 border-t border-neutral-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
+                  Custom Initial Registrations Count
+                  <span className="text-gray-500 font-normal">(Display metric override)</span>
+                </label>
+                <span className="text-[11px] text-gray-500">Optional</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    name="customRegistrationCount"
+                    min="0"
+                    max="10000000"
+                    value={formData.customRegistrationCount}
+                    onChange={handleChange}
+                    placeholder="Leave empty for 0 verified registrations"
+                    className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 transition font-mono"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[10, 50, 100, 500].map((inc) => (
+                    <button
+                      key={inc}
+                      type="button"
+                      onClick={() => {
+                        const curr = parseInt(formData.customRegistrationCount, 10) || 0;
+                        setFormData((prev) => ({ ...prev, customRegistrationCount: curr + inc }));
+                      }}
+                      className="px-2.5 py-2 text-xs font-mono font-bold bg-black hover:bg-neutral-800 text-gray-300 rounded-lg border border-neutral-800 transition"
+                    >
+                      +{inc}
+                    </button>
+                  ))}
+                  {formData.capacity && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, customRegistrationCount: formData.capacity }))
+                      }
+                      className="px-2.5 py-2 text-xs font-bold bg-neutral-800 hover:bg-amber-500 hover:text-black text-amber-400 rounded-lg border border-amber-500/30 transition"
+                    >
+                      Fill Capacity ({formData.capacity})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, customRegistrationCount: "" }))
+                    }
+                    className="px-2.5 py-2 text-xs font-bold bg-neutral-800 hover:bg-emerald-600 hover:text-white text-emerald-400 rounded-lg border border-emerald-500/30 transition"
+                  >
+                    Clear Override
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-500">
+                When set, this custom number will be displayed as the total registrations across the platform. Leave empty to automatically start at 0 and track actual registrations.
+              </p>
             </div>
           </div>
         </div>

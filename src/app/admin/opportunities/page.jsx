@@ -28,6 +28,7 @@ import {
   Tag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/dateUtils";
 import { fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
 
 const OPPORTUNITY_TYPES = [
@@ -865,7 +866,7 @@ export default function AdminOpportunitiesPage() {
                           </a>
                         )}
                         <span className="text-neutral-500 font-mono text-[10px]">
-                          Applied {new Date(app.createdAt).toLocaleDateString()}
+                          Applied {formatDate(app.createdAt)}
                         </span>
                       </div>
                     </div>

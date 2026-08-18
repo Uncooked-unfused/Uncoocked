@@ -84,11 +84,21 @@ export async function GET(request) {
       }
     });
 
-    const events = rawEvents.map((ev) => ({
-      ...ev,
-      category: ev.category || ev.type,
-      bannerUrl: ev.bannerUrl,
-    }));
+    const events = rawEvents.map((ev) => {
+      const effectiveRegistrations =
+        ev.customRegistrationCount !== null && ev.customRegistrationCount !== undefined
+          ? ev.customRegistrationCount
+          : (ev._count?.registrations || 0);
+      return {
+        ...ev,
+        category: ev.category || ev.type,
+        bannerUrl: ev.bannerUrl,
+        _count: {
+          ...ev._count,
+          registrations: effectiveRegistrations,
+        },
+      };
+    });
 
     setCachedEvents(cacheKey, events);
 

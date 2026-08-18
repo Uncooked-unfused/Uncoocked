@@ -4,18 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Calendar, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import Image from "next/image";
+import { formatDate } from "@/lib/dateUtils";
 
-const fmtDate = (d) => {
-  if (!d) return "";
-  const dt = new Date(d);
-  return isNaN(dt.getTime())
-    ? String(d)
-    : dt.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-};
+const fmtDate = (d) => formatDate(d);
 
 const getTypeStyle = (type) => {
   switch (type?.toLowerCase()) {

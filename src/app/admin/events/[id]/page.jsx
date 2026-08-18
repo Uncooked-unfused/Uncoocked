@@ -20,9 +20,13 @@ import {
   Image as ImageIcon,
   FileText,
   AlertTriangle,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useBackNavigation } from "@/context/NavigationHistoryContext";
 import ImageCropper from "@/components/ui/ImageCropper";
+import ReactMarkdown from "react-markdown";
+import { formatDate, formatDateTime } from "@/lib/dateUtils";
+import { eventMarkdownComponents } from "@/components/event/EventDescription";
 
 const EVENT_TYPES = [
   "Hackathon",
@@ -75,6 +79,7 @@ export default function EventAdminManagementPage({ params }) {
     ticketType: "Free",
     price: 0,
     capacity: 100,
+    customRegistrationCount: "",
     waitlistEnabled: true,
     status: "Active",
     archived: false,
@@ -86,6 +91,7 @@ export default function EventAdminManagementPage({ params }) {
     tags: "",
     keywords: "",
     organizerId: "",
+    customOrganizerName: "",
     editReason: "",
   });
 
@@ -104,9 +110,8 @@ export default function EventAdminManagementPage({ params }) {
         if (ev.date) {
           const d = new Date(ev.date);
           if (!isNaN(d.getTime())) {
-            formattedDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-              .toISOString()
-              .slice(0, 16);
+            const pad = (n) => String(n).padStart(2, "0");
+            formattedDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
           }
         }
 
@@ -145,6 +150,10 @@ export default function EventAdminManagementPage({ params }) {
           ticketType: ev.ticketType || "Free",
           price: ev.price || 0,
           capacity: ev.capacity || 100,
+          customRegistrationCount:
+            ev.customRegistrationCount !== null && ev.customRegistrationCount !== undefined
+              ? ev.customRegistrationCount
+              : "",
           waitlistEnabled: ev.waitlistEnabled ?? true,
           status: ev.status || "Active",
           archived: ev.archived || false,
@@ -156,6 +165,7 @@ export default function EventAdminManagementPage({ params }) {
           tags: tagsVal,
           keywords: keywordsVal,
           organizerId: ev.organizerId || "",
+          customOrganizerName: ev.customOrganizerName || "",
           editReason: "",
         });
       } else {
@@ -223,6 +233,13 @@ export default function EventAdminManagementPage({ params }) {
         ...editForm,
         price: parseFloat(editForm.price) || 0,
         capacity: parseInt(editForm.capacity, 10) || 100,
+        customRegistrationCount:
+          editForm.customRegistrationCount !== "" &&
+          editForm.customRegistrationCount !== null &&
+          editForm.customRegistrationCount !== undefined
+            ? parseInt(editForm.customRegistrationCount, 10)
+            : null,
+        customOrganizerName: editForm.customOrganizerName?.trim() || null,
         popularityScore: parseFloat(editForm.popularityScore) || 0,
         reason: editForm.editReason || "Admin updated event details",
         tags: editForm.tags ? editForm.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
@@ -407,7 +424,7 @@ export default function EventAdminManagementPage({ params }) {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
                 <div>
                   <span className="text-gray-500 block text-[10px] uppercase font-semibold">Event Date</span>
-                  <span className="font-bold text-white">{new Date(event.date).toLocaleString()}</span>
+                  <span className="font-bold text-white">{formatDateTime(event.date)}</span>
                 </div>
                 <div>
                   <span className="text-gray-500 block text-[10px] uppercase font-semibold">Ticket Type</span>
@@ -427,29 +444,57 @@ export default function EventAdminManagementPage({ params }) {
                 </div>
                 <div>
                   <span className="text-gray-500 block text-[10px] uppercase font-semibold">Total Registrations</span>
-                  <span className="font-mono text-emerald-400 font-bold">{event._count?.registrations || 0}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-emerald-400 font-bold text-sm">
+                      {event.customRegistrationCount !== null && event.customRegistrationCount !== undefined
+                        ? event.customRegistrationCount
+                        : (event._count?.registrations || 0)}
+                    </span>
+                    {event.customRegistrationCount !== null && event.customRegistrationCount !== undefined ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-medium">
+                        Custom ({event._count?.registrations || 0} real)
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-500">Real</span>
+                    )}
+                    <button
+                      onClick={() => setActiveTab("edit")}
+                      title="Edit registrations count"
+                      className="p-1 hover:bg-neutral-800 rounded text-gray-400 hover:text-amber-400 transition cursor-pointer"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="pt-2 border-t border-neutral-800/60 text-xs space-y-1">
+              <div className="pt-2 border-t border-neutral-800/60 text-xs space-y-2">
                 <span className="text-gray-500 block text-[10px] uppercase font-semibold">Description</span>
-                <p className="text-gray-300 leading-relaxed whitespace-pre-line">{event.description}</p>
+                <div className="prose prose-invert max-w-none bg-black/50 p-4 rounded-xl border border-neutral-800/80">
+                  <ReactMarkdown components={eventMarkdownComponents}>
+                    {event.description || "*No description provided.*"}
+                  </ReactMarkdown>
+                </div>
               </div>
 
               {event.schedule && (
-                <div className="pt-2 border-t border-neutral-800/60 text-xs space-y-1">
+                <div className="pt-2 border-t border-neutral-800/60 text-xs space-y-2">
                   <span className="text-gray-500 block text-[10px] uppercase font-semibold">Schedule</span>
-                  <p className="text-gray-300 font-mono whitespace-pre-line bg-black p-3 rounded-lg border border-neutral-800">
-                    {event.schedule}
-                  </p>
+                  <div className="prose prose-invert max-w-none bg-black/50 p-4 rounded-xl border border-neutral-800/80">
+                    <ReactMarkdown components={eventMarkdownComponents}>
+                      {event.schedule}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               )}
 
               {event.prizePool && (
-                <div className="pt-2 border-t border-neutral-800/60 text-xs space-y-1">
+                <div className="pt-2 border-t border-neutral-800/60 text-xs space-y-2">
                   <span className="text-gray-500 block text-[10px] uppercase font-semibold">Prize Pool / Perks</span>
-                  <p className="text-gray-300 font-mono whitespace-pre-line bg-black p-3 rounded-lg border border-neutral-800">
-                    {event.prizePool}
-                  </p>
+                  <div className="prose prose-invert max-w-none bg-black/50 p-4 rounded-xl border border-neutral-800/80">
+                    <ReactMarkdown components={eventMarkdownComponents}>
+                      {event.prizePool}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>
@@ -549,7 +594,7 @@ export default function EventAdminManagementPage({ params }) {
                         <p className="text-[10px] text-gray-500 font-mono">{reg.user?.email}</p>
                       </div>
                       <span className="text-[10px] font-mono text-gray-400">
-                        {new Date(reg.registeredAt).toLocaleDateString()}
+                        {formatDate(reg.registeredAt)}
                       </span>
                     </div>
                   ))}
@@ -566,9 +611,18 @@ export default function EventAdminManagementPage({ params }) {
                 <Users className="w-4 h-4 text-amber-500" /> Event Host / Organizer
               </h2>
               <div className="space-y-2 text-xs">
+                {event.customOrganizerName && (
+                  <div>
+                    <span className="text-gray-500 block text-[10px] uppercase font-semibold">Custom Organizer Name</span>
+                    <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                      {event.customOrganizerName}
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 font-normal">Custom</span>
+                    </span>
+                  </div>
+                )}
                 <div>
-                  <span className="text-gray-500 block text-[10px] uppercase font-semibold">Name</span>
-                  <span className="font-bold text-white">{event.organizer?.name || event.organizer?.fullName || "N/A"}</span>
+                  <span className="text-gray-500 block text-[10px] uppercase font-semibold">Assigned Account</span>
+                  <span className="font-bold text-white">{event.organizer?.name || event.organizer?.fullName || "No User Attached"}</span>
                 </div>
                 <div>
                   <span className="text-gray-500 block text-[10px] uppercase font-semibold">Email</span>
@@ -598,7 +652,7 @@ export default function EventAdminManagementPage({ params }) {
                     <div key={log.id} className="space-y-0.5 text-xs">
                       <p className="font-bold text-amber-400 font-mono text-[11px]">{log.action}</p>
                       {log.reason && <p className="text-gray-400 italic text-[11px]">&ldquo;{log.reason}&rdquo;</p>}
-                      <p className="text-[10px] text-gray-500 font-mono">{new Date(log.timestamp).toLocaleString()}</p>
+                      <p className="text-[10px] text-gray-500 font-mono">{formatDateTime(log.timestamp)}</p>
                     </div>
                   ))
                 ) : (
@@ -690,6 +744,20 @@ export default function EventAdminManagementPage({ params }) {
                   value={editForm.popularityScore}
                   onChange={handleEditChange}
                   className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500 font-mono transition"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-300 block">
+                  Custom Organizer Name <span className="text-gray-500 font-normal text-[11px]">(e.g. CMS Station Road Campus, Club Name)</span>
+                </label>
+                <input
+                  type="text"
+                  name="customOrganizerName"
+                  value={editForm.customOrganizerName}
+                  onChange={handleEditChange}
+                  placeholder="e.g. CMS Station Road Campus MUN"
+                  className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition"
                 />
               </div>
 
@@ -877,6 +945,74 @@ export default function EventAdminManagementPage({ params }) {
                   />
                   Enable Waitlist once capacity is reached
                 </label>
+              </div>
+
+              {/* Custom Registrations Count Override */}
+              <div className="md:col-span-3 pt-4 border-t border-neutral-800 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
+                    Custom Total Registrations Override
+                    <span className="text-gray-500 font-normal">(Display metric)</span>
+                  </label>
+                  <div className="text-[11px] text-gray-400 flex items-center gap-2">
+                    <span>Verified DB Registrations:</span>
+                    <strong className="font-mono text-emerald-400">{event?._count?.registrations || 0}</strong>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      name="customRegistrationCount"
+                      min="0"
+                      max="10000000"
+                      value={editForm.customRegistrationCount}
+                      onChange={handleEditChange}
+                      placeholder={`Leave empty for real count (${event?._count?.registrations || 0})`}
+                      className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 transition font-mono"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[10, 50, 100, 500].map((inc) => (
+                      <button
+                        key={inc}
+                        type="button"
+                        onClick={() => {
+                          const curr = parseInt(editForm.customRegistrationCount, 10) || 0;
+                          setEditForm((prev) => ({ ...prev, customRegistrationCount: curr + inc }));
+                        }}
+                        className="px-2.5 py-2 text-xs font-mono font-bold bg-black hover:bg-neutral-800 text-gray-300 rounded-lg border border-neutral-800 transition"
+                      >
+                        +{inc}
+                      </button>
+                    ))}
+                    {editForm.capacity && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditForm((prev) => ({ ...prev, customRegistrationCount: editForm.capacity }))
+                        }
+                        className="px-2.5 py-2 text-xs font-bold bg-neutral-800 hover:bg-amber-500 hover:text-black text-amber-400 rounded-lg border border-amber-500/30 transition"
+                      >
+                        Fill Capacity ({editForm.capacity})
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditForm((prev) => ({ ...prev, customRegistrationCount: "" }))
+                      }
+                      className="px-2.5 py-2 text-xs font-bold bg-neutral-800 hover:bg-emerald-600 hover:text-white text-emerald-400 rounded-lg border border-emerald-500/30 transition"
+                    >
+                      Use Real DB Count
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  When set, this custom number overrides the total registrations shown on public event pages, discovery cards, and platform statistics. Clear to use real database counts.
+                </p>
               </div>
             </div>
           </div>

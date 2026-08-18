@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+import { formatDate } from "@/lib/dateUtils";
 
 function ApplicationsQueueContent() {
   const router = useRouter();
@@ -159,7 +160,7 @@ function ApplicationsQueueContent() {
       app.user?.email || "N/A",
       `"${app.organizationName || "N/A"}"`,
       `"${app.organizationType || "N/A"}"`,
-      new Date(app.createdAt).toLocaleDateString(),
+      formatDate(app.createdAt),
       app.status,
     ]);
 
@@ -363,7 +364,7 @@ function ApplicationsQueueContent() {
                       <p className="text-[10px] text-gray-500">{app.organizationType || "N/A"}</p>
                     </td>
                     <td className="p-4 text-gray-400 font-mono text-[11px]">
-                      {new Date(app.createdAt).toLocaleDateString()}
+                      {formatDate(app.createdAt)}
                     </td>
                     <td className="p-4">
                       <span

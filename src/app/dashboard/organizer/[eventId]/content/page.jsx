@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import ImageCropper from "@/components/ui/ImageCropper";
 import Image from "next/image";
 import { toast } from "sonner";
+import { eventMarkdownComponents } from "@/components/event/EventDescription";
 
 export default function ContentEditorPage({ params }) {
   const unwrappedParams = use(params);
@@ -207,8 +208,10 @@ export default function ContentEditorPage({ params }) {
                     📍 Location: <span className="text-white font-bold">{formData.venue}</span>
                   </div>
                 )}
-                <div className="prose prose-invert prose-p:text-sm prose-h1:text-2xl prose-h2:text-xl prose-a:text-neon-lavender max-w-none">
-                  <ReactMarkdown>{formData.description || "*No description provided yet.*"}</ReactMarkdown>
+                <div className="prose prose-invert max-w-none">
+                  <ReactMarkdown components={eventMarkdownComponents}>
+                    {formData.description || "*No description provided yet.*"}
+                  </ReactMarkdown>
                 </div>
               </div>
             </div>

@@ -8,6 +8,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { mergeWithMockEvents } from "@/lib/mockData";
+import { formatDate } from "@/lib/dateUtils";
 import {
   Calendar,
   MapPin,
@@ -114,9 +115,7 @@ export default function DashboardPage() {
           return {
             ...ev,
             dateStr: ev.date, // keep original date string
-            date: valid
-              ? d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-              : ev.date,
+            date: formatDate(ev.dateISO || ev.date),
             ts: valid ? d.getTime() : 0,
           };
         });
