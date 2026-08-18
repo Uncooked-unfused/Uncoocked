@@ -51,8 +51,8 @@ export default function EventsExplorer({
     }
   };
 
-  // Filter and sort events based on search query, category, and zone in real-time
-  const filteredEvents = useMemo(() => {
+  // Filter and categorize events based on search query, category, and zone in real-time
+  const { upcomingEvents, completedEvents } = useMemo(() => {
     const list = events.filter((ev) => {
       const matchCategory =
         activeCategory === "All" ||
@@ -73,16 +73,26 @@ export default function EventsExplorer({
       return matchCategory && matchZone && matchSearch;
     });
 
-    // Sort upcoming events first, followed by past events
-    return list.sort((a, b) => {
-      const timeA = new Date(a.date).getTime() || 0;
-      const timeB = new Date(b.date).getTime() || 0;
-      const isPastA = timeA < now;
-      const isPastB = timeB < now;
-      if (isPastA && !isPastB) return 1;
-      if (!isPastA && isPastB) return -1;
-      return timeA - timeB;
+    const upcoming = [];
+    const completed = [];
+
+    list.forEach((ev) => {
+      const isPast = new Date(ev.date).getTime() < now;
+      const isMarkedCompleted = ev.status === "Completed";
+      if (isMarkedCompleted || isPast) {
+        completed.push(ev);
+      } else {
+        upcoming.push(ev);
+      }
     });
+
+    // Upcoming sorted earliest first
+    upcoming.sort((a, b) => (new Date(a.date).getTime() || 0) - (new Date(b.date).getTime() || 0));
+
+    // Completed sorted most recent first
+    completed.sort((a, b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
+
+    return { upcomingEvents: upcoming, completedEvents: completed };
   }, [events, searchQuery, activeCategory, activeZone, now]);
 
   // Framer Motion staggered transition configurations
@@ -129,7 +139,7 @@ export default function EventsExplorer({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Unified Control Strip */}
       <div className="w-full max-w-full bg-[#111111] border border-white/8 rounded-xl p-3 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-3 min-w-0 overflow-hidden box-border">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 min-w-0 max-w-full overflow-hidden">
@@ -202,105 +212,207 @@ export default function EventsExplorer({
 
       {/* Recommended Section (Injected dynamically below controls) */}
       {recommendedSection && !searchQuery.trim() && (
-        <div className="pt-2 pb-4">
+        <div className="pt-2 pb-2">
           {recommendedSection}
         </div>
       )}
 
-      {/* Browse Events Section */}
+      {/* Upcoming / Active Events Section */}
       <div className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-lg font-bold text-white tracking-tight">Browse Events</h2>
-          <p className="text-[12px] text-white/50">Explore all upcoming campus events.</p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              Browse Events
+              <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                {upcomingEvents.length}
+              </span>
+            </h2>
+            <p className="text-[12px] text-white/50">Explore all upcoming campus hackathons, meetups, and fests.</p>
+          </div>
         </div>
 
-      {/* Dynamic Grid of Cards */}
-      {filteredEvents.length === 0 ? (
-        <div className="text-center py-12 text-white/50 bg-[#111111] border border-white/8 rounded-2xl">
-          <p className="text-[13px]">No campus events match your query.</p>
-        </div>
-      ) : (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          {filteredEvents.map((ev, index) => (
-            <motion.div
-              key={ev.id}
-              variants={cardVariants}
-              whileHover={{ y: -2 }}
-              className="group flex flex-col overflow-hidden bg-[#111111] border border-white/8 hover:border-white/16 rounded-xl transition-all duration-150 min-h-[300px] shadow-sm cursor-pointer"
-              onClick={() => onSelectEvent(ev.id)}
-            >
-              {/* Event Card Banner Preview */}
-              <div className="relative h-28 w-full overflow-hidden bg-[#0A0A0A] border-b border-white/6">
-                {ev.bannerUrl ? (
-                  <Image
-                    src={ev.bannerUrl}
-                    alt={ev.title}
-                    fill
-                    priority={index < 3}
-                    sizes="(max-width: 768px) 100vw, 400px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105 opacity-80 group-hover:opacity-100"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center p-4 text-center">
-                    <span className="font-bold text-sm text-white/50 leading-snug line-clamp-2">
-                      {ev.title}
-                    </span>
-                  </div>
-                )}
-                {/* Category Tag overlaid on the banner */}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                  <span
-                    className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${getTypeStyle(ev.type)}`}
-                  >
-                    {ev.type}
-                  </span>
-                  {new Date(ev.date).getTime() < now && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
-                      Ended
-                    </span>
+        {/* Dynamic Grid of Upcoming Cards */}
+        {upcomingEvents.length === 0 ? (
+          <div className="text-center py-10 text-white/50 bg-[#111111] border border-white/8 rounded-2xl">
+            <p className="text-[13px]">No upcoming events match your active filters.</p>
+          </div>
+        ) : (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {upcomingEvents.map((ev, index) => (
+              <motion.div
+                key={ev.id}
+                variants={cardVariants}
+                whileHover={{ y: -2 }}
+                className="group flex flex-col overflow-hidden bg-[#111111] border border-white/8 hover:border-white/16 rounded-xl transition-all duration-150 min-h-[300px] shadow-sm cursor-pointer"
+                onClick={() => onSelectEvent(ev.id)}
+              >
+                {/* Event Card Banner Preview */}
+                <div className="relative h-28 w-full overflow-hidden bg-[#0A0A0A] border-b border-white/6">
+                  {ev.bannerUrl ? (
+                    <Image
+                      src={ev.bannerUrl}
+                      alt={ev.title}
+                      fill
+                      priority={index < 3}
+                      sizes="(max-width: 768px) 100vw, 400px"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center p-4 text-center">
+                      <span className="font-bold text-sm text-white/50 leading-snug line-clamp-2">
+                        {ev.title}
+                      </span>
+                    </div>
                   )}
-                </div>
-              </div>
-
-              {/* Card Content Details */}
-              <div className="p-4 flex flex-col justify-between flex-1 space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-mono">
-                    <MapPin className="h-3 w-3 shrink-0" />
-                    <span className="truncate max-w-[140px]">
-                      {ev.zone ? ev.zone : ev.location?.split(",")?.[0] || ev.location || "Campus"}
+                  {/* Category Tag overlaid on the banner */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    <span
+                      className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${getTypeStyle(ev.type)}`}
+                    >
+                      {ev.type}
                     </span>
                   </div>
-
-                  <h3 className="text-[15px] font-bold text-white group-hover:text-white/80 transition-colors duration-150 leading-snug line-clamp-1">
-                    {ev.title}
-                  </h3>
-
-                  <p className="text-[12px] text-white/45 leading-relaxed line-clamp-2">
-                    {ev.description}
-                  </p>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-white/6 pt-3 mt-auto">
-                  <div className="flex items-center gap-1.5 text-white/40 font-mono text-[10px]">
-                    <Calendar className="h-3 w-3 shrink-0" />
-                    <span>{ev.date}</span>
+                {/* Card Content Details */}
+                <div className="p-4 flex flex-col justify-between flex-1 space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-mono">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate max-w-[140px]">
+                        {ev.zone ? ev.zone : ev.location?.split(",")?.[0] || ev.location || "Campus"}
+                      </span>
+                    </div>
+
+                    <h3 className="text-[15px] font-bold text-white group-hover:text-white/80 transition-colors duration-150 leading-snug line-clamp-1">
+                      {ev.title}
+                    </h3>
+
+                    <p className="text-[12px] text-white/45 leading-relaxed line-clamp-2">
+                      {ev.description}
+                    </p>
                   </div>
-                  
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/60 group-hover:text-white transition-colors">
-                    Details <ArrowRight className="h-3 w-3" />
-                  </span>
+
+                  <div className="flex items-center justify-between border-t border-white/6 pt-3 mt-auto">
+                    <div className="flex items-center gap-1.5 text-white/40 font-mono text-[10px]">
+                      <Calendar className="h-3 w-3 shrink-0" />
+                      <span>{ev.date}</span>
+                    </div>
+                    
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/60 group-hover:text-white transition-colors">
+                      Details <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Dedicated Completed Events Section */}
+      <div className="space-y-4 pt-6 border-t border-white/8">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <span className="text-amber-400">🏁</span> Completed Events
+              <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                {completedEvents.length}
+              </span>
+            </h2>
+            <p className="text-[12px] text-white/50">Browse past campus events, hackathons, and archived recaps.</p>
+          </div>
+        </div>
+
+        {/* Grid of Completed Events */}
+        {completedEvents.length === 0 ? (
+          <div className="text-center py-10 text-white/40 bg-[#0E0E0E] border border-white/6 rounded-2xl">
+            <p className="text-[13px]">No completed campus events found.</p>
+          </div>
+        ) : (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {completedEvents.map((ev) => (
+              <motion.div
+                key={ev.id}
+                variants={cardVariants}
+                whileHover={{ y: -2 }}
+                className="group flex flex-col overflow-hidden bg-[#0D0D0D] border border-white/6 hover:border-white/14 rounded-xl transition-all duration-150 min-h-[300px] shadow-sm cursor-pointer opacity-90 hover:opacity-100"
+                onClick={() => onSelectEvent(ev.id)}
+              >
+                {/* Event Card Banner Preview */}
+                <div className="relative h-28 w-full overflow-hidden bg-[#070707] border-b border-white/6">
+                  {ev.bannerUrl ? (
+                    <Image
+                      src={ev.bannerUrl}
+                      alt={ev.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 400px"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105 opacity-60 group-hover:opacity-85 grayscale-[40%] group-hover:grayscale-0"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#141414] flex items-center justify-center p-4 text-center">
+                      <span className="font-bold text-sm text-white/40 leading-snug line-clamp-2">
+                        {ev.title}
+                      </span>
+                    </div>
+                  )}
+                  {/* Status & Category Overlays */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    <span
+                      className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${getTypeStyle(ev.type)}`}
+                    >
+                      {ev.type}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      Completed
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Content Details */}
+                <div className="p-4 flex flex-col justify-between flex-1 space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-mono">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate max-w-[140px]">
+                        {ev.zone ? ev.zone : ev.location?.split(",")?.[0] || ev.location || "Campus"}
+                      </span>
+                    </div>
+
+                    <h3 className="text-[15px] font-bold text-white/90 group-hover:text-white transition-colors duration-150 leading-snug line-clamp-1">
+                      {ev.title}
+                    </h3>
+
+                    <p className="text-[12px] text-white/40 leading-relaxed line-clamp-2">
+                      {ev.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-white/6 pt-3 mt-auto">
+                    <div className="flex items-center gap-1.5 text-white/40 font-mono text-[10px]">
+                      <Calendar className="h-3 w-3 shrink-0" />
+                      <span>{ev.date}</span>
+                    </div>
+                    
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 group-hover:text-blue-300 transition-colors">
+                      View Recap <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
     </div>
   );

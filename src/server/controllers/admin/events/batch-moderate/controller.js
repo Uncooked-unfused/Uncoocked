@@ -4,6 +4,7 @@ import { requireSuperAdmin } from "@/server/auth/guards";
 import { withAdminRateLimit } from "@/server/middleware/rateLimit";
 import { createNotification } from "@/server/services/notificationService";
 import { sendEventModerationEmail } from "@/server/services/emailService";
+import { invalidateEventsCache } from "@/server/services/eventsCacheService";
 
 export const POST = withAdminRateLimit(async function POST(request) {
   try {
@@ -14,7 +15,7 @@ export const POST = withAdminRateLimit(async function POST(request) {
       return NextResponse.json({ error: "Missing or empty eventIds array" }, { status: 400 });
     }
 
-    if (!["SUSPEND", "RESTORE", "ARCHIVE"].includes(action)) {
+    if (!["SUSPEND", "RESTORE", "ARCHIVE", "COMPLETE"].includes(action)) {
       return NextResponse.json({ error: "Invalid batch moderation action" }, { status: 400 });
     }
 
@@ -47,6 +48,9 @@ export const POST = withAdminRateLimit(async function POST(request) {
         } else if (action === "ARCHIVE") {
           updatedArchived = true;
           auditAction = "EVENT_BULK_ARCHIVED";
+        } else if (action === "COMPLETE") {
+          updatedStatus = "Completed";
+          auditAction = "EVENT_BULK_COMPLETED";
         }
 
         await prisma.$transaction([
@@ -89,6 +93,8 @@ export const POST = withAdminRateLimit(async function POST(request) {
         errors.push({ id, error: err.message });
       }
     }
+
+    invalidateEventsCache();
 
     return NextResponse.json({
       success: errors.length === 0,

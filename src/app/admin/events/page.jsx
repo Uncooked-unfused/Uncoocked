@@ -4,22 +4,18 @@ import { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  Calendar,
   Search,
   CheckSquare,
   Square,
   ShieldCheck,
-  Building2,
-  MapPin,
-  Ticket,
-  Clock,
   ExternalLink,
   RefreshCw,
-  Archive,
-  AlertCircle,
+  Plus,
+  Edit3,
+  CheckCircle2,
 } from "lucide-react";
 
-import { getCachedAdminData, fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
+import { fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
 
 function EventModerationQueueContent() {
   const [events, setEvents] = useState([]);
@@ -35,7 +31,7 @@ function EventModerationQueueContent() {
 
   // Batch Moderation State
   const [selectedIds, setSelectedIds] = useState([]);
-  const [batchModal, setBatchModal] = useState(null); // { action: "SUSPEND" | "RESTORE" | "ARCHIVE" }
+  const [batchModal, setBatchModal] = useState(null); // { action: "SUSPEND" | "RESTORE" | "ARCHIVE" | "COMPLETE" }
   const [batchReason, setBatchReason] = useState("");
   const [batchSubmitting, setBatchSubmitting] = useState(false);
 
@@ -138,6 +134,35 @@ function EventModerationQueueContent() {
     }
   };
 
+  // Quick One-Click Status Transition for a Single Event
+  const handleQuickStatusChange = async (eventId, action) => {
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/moderate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(
+          action === "COMPLETE"
+            ? "Event marked as Completed!"
+            : action === "RESTORE"
+            ? "Event reactivated as Active!"
+            : "Event status updated!"
+        );
+        invalidateClientCache("/api/admin/events");
+        invalidateClientCache("/api/admin/stats");
+        invalidateClientCache("/api/admin/analytics");
+        fetchEvents(true);
+      } else {
+        toast.error(data.error || "Failed to update event status");
+      }
+    } catch (err) {
+      toast.error(`Error: ${err.message}`);
+    }
+  };
+
   const statusPills = [
     { label: "ALL EVENTS", value: "ALL" },
     { label: "ACTIVE", value: "ACTIVE" },
@@ -154,18 +179,27 @@ function EventModerationQueueContent() {
           <div className="flex items-center gap-2 text-amber-500 text-xs font-mono font-bold tracking-wider uppercase mb-1">
             <ShieldCheck className="w-4 h-4" /> Content Governance & Moderation
           </div>
-          <h1 className="text-3xl font-black">Event Moderation Queue</h1>
-          <p className="text-xs text-gray-400 mt-1">Review, monitor, suspend, or archive published platform events.</p>
+          <h1 className="text-3xl font-black">Event Moderation & Management</h1>
+          <p className="text-xs text-gray-400 mt-1">Review, monitor, create, edit, suspend, complete, or archive platform events.</p>
         </div>
 
-        <button
-          onClick={() => fetchEvents(true)}
-          disabled={isRefreshing}
-          className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
-          {isRefreshing ? "Refreshing..." : "Refresh Queue"}
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/events/new"
+            className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-sm"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            Create Event
+          </Link>
+          <button
+            onClick={() => fetchEvents(true)}
+            disabled={isRefreshing}
+            className="bg-neutral-900 hover:bg-neutral-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-neutral-800 transition flex items-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh Queue"}
+          </button>
+        </div>
       </div>
 
       {/* Search & Filter Controls */}
@@ -240,6 +274,12 @@ function EventModerationQueueContent() {
               className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-md transition"
             >
               Bulk Restore
+            </button>
+            <button
+              onClick={() => setBatchModal({ action: "COMPLETE" })}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-1.5 rounded-md transition"
+            >
+              Bulk Complete
             </button>
             <button
               onClick={() => setBatchModal({ action: "SUSPEND" })}
@@ -341,12 +381,39 @@ function EventModerationQueueContent() {
                     </td>
                     <td className="p-4 font-mono text-gray-300">{e._count?.registrations || 0}</td>
                     <td className="p-4 text-right">
-                      <Link
-                        href={`/admin/events/${e.id}`}
-                        className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-3 py-1.5 rounded-md transition text-[11px] inline-flex items-center gap-1"
-                      >
-                        Moderate <ExternalLink className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {e.status !== "Completed" ? (
+                          <button
+                            onClick={() => handleQuickStatusChange(e.id, "COMPLETE")}
+                            title="Mark as Completed"
+                            className="bg-neutral-800 hover:bg-blue-600 hover:text-white text-blue-400 font-bold px-2 py-1.5 rounded transition text-[11px] inline-flex items-center gap-1 border border-blue-500/30 cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3 h-3" /> Complete
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleQuickStatusChange(e.id, "RESTORE")}
+                            title="Re-open as Active"
+                            className="bg-neutral-800 hover:bg-emerald-600 hover:text-white text-emerald-400 font-bold px-2 py-1.5 rounded transition text-[11px] inline-flex items-center gap-1 border border-emerald-500/30 cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3 h-3" /> Reactivate
+                          </button>
+                        )}
+                        <Link
+                          href={`/admin/events/${e.id}?tab=edit`}
+                          title="Edit all details"
+                          className="bg-neutral-800 hover:bg-amber-500 hover:text-black text-gray-300 font-bold px-2 py-1.5 rounded transition text-[11px] inline-flex items-center gap-1 border border-neutral-700"
+                        >
+                          <Edit3 className="w-3 h-3" /> Edit
+                        </Link>
+                        <Link
+                          href={`/admin/events/${e.id}`}
+                          title="Moderate and view audit trail"
+                          className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-2.5 py-1.5 rounded transition text-[11px] inline-flex items-center gap-1 border border-neutral-700"
+                        >
+                          View <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );

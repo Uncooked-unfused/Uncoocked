@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/server/db/prisma';
 import { getAuthToken, requireEventManager } from "@/server/auth/guards";
-
-const prisma = new PrismaClient({});
+import { invalidateEventsCache } from "@/server/services/eventsCacheService";
 
 export async function POST(request, { params }) {
   try {
@@ -24,6 +23,8 @@ export async function POST(request, { params }) {
       where: { id },
       data: { status: 'Completed' }
     });
+
+    invalidateEventsCache();
 
     return NextResponse.json({ success: true, event });
   } catch (error) {

@@ -10,11 +10,12 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeArchived = searchParams.get('includeArchived') === 'true';
+    const statusParam = searchParams.get('status');
     const typeFilter = searchParams.get('type');
     const categoryFilter = searchParams.get('category');
     const zoneFilter = searchParams.get('zone');
 
-    const cacheKey = `events:${includeArchived}:${typeFilter || ''}:${categoryFilter || ''}:${zoneFilter || ''}`;
+    const cacheKey = `events:${includeArchived}:${statusParam || ''}:${typeFilter || ''}:${categoryFilter || ''}:${zoneFilter || ''}`;
     const cached = getCachedEvents(cacheKey);
     if (cached) {
       return NextResponse.json(
@@ -31,9 +32,19 @@ export async function GET(request) {
       city: { in: ACTIVE_CITIES }
     };
 
+    const normalizedStatus = statusParam
+      ? statusParam.charAt(0).toUpperCase() + statusParam.slice(1).toLowerCase()
+      : null;
+
     if (!includeArchived) {
       whereClause.archived = false;
-      whereClause.status = 'Active';
+      if (normalizedStatus) {
+        whereClause.status = normalizedStatus;
+      } else {
+        whereClause.status = { in: ['Active', 'Completed'] };
+      }
+    } else if (normalizedStatus) {
+      whereClause.status = normalizedStatus;
     }
 
     if (typeFilter && typeFilter !== 'All') {

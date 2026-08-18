@@ -22,9 +22,11 @@ export async function getAuthToken(request) {
 }
 
 // True if the authenticated user owns/manages the given event
-// (event organizer OR an EventManager row for that event).
+// (event organizer OR an EventManager row for that event OR Super Admin/Admin).
 export async function requireEventManager(eventId, token) {
   if (!token?.sub) return false;
+  const normalizedRole = token.role?.toUpperCase();
+  if (normalizedRole === "SUPER_ADMIN" || normalizedRole === "ADMIN") return true;
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: { organizerId: true },

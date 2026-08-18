@@ -1,1 +1,1 @@
-export { GET } from "@/server/controllers/admin/events/[id]/controller";
+export { GET, PUT, DELETE } from "@/server/controllers/admin/events/[id]/controller";

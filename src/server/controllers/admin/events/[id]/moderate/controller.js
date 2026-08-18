@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
 import { createNotification } from "@/server/services/notificationService";
 import { sendEventModerationEmail } from "@/server/services/emailService";
+import { invalidateEventsCache } from "@/server/services/eventsCacheService";
 
 export async function POST(request, { params }) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request, { params }) {
     const { id } = await params;
     const { action, reason } = await request.json();
 
-    const VALID_ACTIONS = ["SUSPEND", "RESTORE", "ARCHIVE", "UNARCHIVE"];
+    const VALID_ACTIONS = ["SUSPEND", "RESTORE", "ARCHIVE", "UNARCHIVE", "COMPLETE"];
     if (!action || !VALID_ACTIONS.includes(action)) {
       return NextResponse.json({ error: "Invalid moderation action" }, { status: 400 });
     }
@@ -45,6 +46,9 @@ export async function POST(request, { params }) {
     } else if (action === "UNARCHIVE") {
       updatedArchived = false;
       auditAction = "EVENT_UNARCHIVED";
+    } else if (action === "COMPLETE") {
+      updatedStatus = "Completed";
+      auditAction = "EVENT_COMPLETED";
     }
 
     const updatedEvent = await prisma.$transaction(async (tx) => {
@@ -92,6 +96,8 @@ export async function POST(request, { params }) {
         reason,
       }).catch((err) => console.error("Event moderation email failed:", err));
     }
+
+    invalidateEventsCache();
 
     return NextResponse.json({ success: true, data: updatedEvent });
   } catch (error) {
