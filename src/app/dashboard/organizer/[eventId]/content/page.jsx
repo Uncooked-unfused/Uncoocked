@@ -193,7 +193,13 @@ export default function ContentEditorPage({ params }) {
               <div className="max-w-3xl mx-auto space-y-6">
                 {formData.bannerUrl && (
                   <div className="relative w-full h-64 rounded-2xl overflow-hidden border border-dark-border">
-                    <Image src={formData.bannerUrl} alt="Event Banner Preview" fill className="object-cover" />
+                    <Image
+                      src={formData.bannerUrl}
+                      alt="Event Banner Preview"
+                      fill
+                      className="object-cover"
+                      unoptimized={Boolean(formData.bannerUrl?.startsWith("data:"))}
+                    />
                   </div>
                 )}
                 {formData.venue && (

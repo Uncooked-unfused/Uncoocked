@@ -87,9 +87,7 @@ export async function GET(request) {
     const events = rawEvents.map((ev) => ({
       ...ev,
       category: ev.category || ev.type,
-      bannerUrl: ev.bannerUrl && ev.bannerUrl.startsWith("data:image")
-        ? "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&auto=format&fit=crop&q=60"
-        : ev.bannerUrl,
+      bannerUrl: ev.bannerUrl,
     }));
 
     setCachedEvents(cacheKey, events);

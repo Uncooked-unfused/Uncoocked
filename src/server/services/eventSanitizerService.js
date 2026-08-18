@@ -90,10 +90,12 @@ export function validateAndSanitizeEventData(data, isUpdate = false) {
     }
   }
 
-  // Handle bannerUrl: Disallow heavy base64 strings to ensure fast API performance
+  // Handle bannerUrl: Allow custom uploaded data URLs (up to 5MB) or standard image URLs
   let bannerUrl = typeof data.bannerUrl === "string" ? data.bannerUrl.trim() : "";
   if (bannerUrl.startsWith("data:image")) {
-    errors.push("Base64 banner images are not allowed. Please provide a standard image URL or preset banner.");
+    if (bannerUrl.length > 5 * 1024 * 1024) {
+      errors.push("Custom uploaded banner image is too large (max 5MB). Please upload a smaller image.");
+    }
   }
 
   // Normalize tags and keywords to JSON string arrays

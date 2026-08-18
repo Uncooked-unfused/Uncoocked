@@ -26,9 +26,7 @@ export async function GET(request, context) {
     const sanitizedEvent = {
       ...event,
       category: event.category || event.type,
-      bannerUrl: event.bannerUrl && event.bannerUrl.startsWith("data:image")
-        ? "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&auto=format&fit=crop&q=60"
-        : event.bannerUrl,
+      bannerUrl: event.bannerUrl,
     };
 
     return NextResponse.json({ success: true, event: sanitizedEvent });

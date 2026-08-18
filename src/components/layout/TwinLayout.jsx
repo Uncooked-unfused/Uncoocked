@@ -213,7 +213,14 @@ export default function TwinLayout({ event, onBack, chatUserData, selectedEventI
             <div className="w-full">
               <div className="w-full h-56 md:h-64 rounded-2xl overflow-hidden border border-white/6 relative mb-6">
                 {event.bannerUrl ? (
-                  <Image src={event.bannerUrl} alt={event.title} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" />
+                  <Image
+                    src={event.bannerUrl}
+                    alt={event.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 800px"
+                    className="object-cover"
+                    unoptimized={Boolean(event.bannerUrl?.startsWith("data:"))}
+                  />
                 ) : (
                   <div className="w-full h-full bg-[#1a1a1a]" />
                 )}

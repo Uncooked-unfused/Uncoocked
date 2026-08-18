@@ -99,11 +99,12 @@ export default function ImageCropper({ onCropCompleteCallback, currentImageUrl }
       ) : (
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           {preview ? (
-            <div className="relative w-full sm:w-64 h-32 rounded-lg overflow-hidden border border-white/10 group">
-              <Image src={preview} alt="Banner Preview" fill sizes="320px" className="object-cover" />
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <label className="cursor-pointer px-3 py-2 bg-black border border-white/20 rounded-lg text-xs font-bold hover:border-neon-purple transition-all">
-                  Change
+            <div className="relative w-full sm:w-80 h-36 rounded-lg overflow-hidden border border-white/10 group bg-neutral-950">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview} alt="Banner Preview" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-xs">
+                <label className="cursor-pointer px-3 py-2 bg-neutral-900 border border-white/20 rounded-lg text-xs font-bold text-white hover:border-amber-500 hover:text-amber-400 transition-all">
+                  Change Media
                   <input
                     type="file"
                     accept="image/*"
@@ -117,16 +118,17 @@ export default function ImageCropper({ onCropCompleteCallback, currentImageUrl }
                     setPreview("");
                     if (onCropCompleteCallback) onCropCompleteCallback("");
                   }}
-                  className="px-3 py-2 bg-red-950/80 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold hover:bg-red-900 transition-all"
+                  className="px-3 py-2 bg-rose-950/80 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold hover:bg-rose-900 transition-all"
                 >
-                  Delete
+                  Remove
                 </button>
               </div>
             </div>
           ) : (
-            <label className="w-full sm:w-64 h-32 flex flex-col items-center justify-center border-2 border-dashed border-dark-border rounded-lg bg-zinc-950 hover:bg-zinc-900 transition-all cursor-pointer text-gray-500 hover:border-neon-purple/50 group">
-              <Upload className="w-6 h-6 mb-2 group-hover:text-neon-purple transition-colors" />
-              <span className="text-xs font-bold uppercase tracking-wider">Upload Banner</span>
+            <label className="w-full sm:w-80 h-36 flex flex-col items-center justify-center border-2 border-dashed border-neutral-800 rounded-lg bg-neutral-950 hover:bg-neutral-900 transition-all cursor-pointer text-gray-400 hover:border-amber-500/50 hover:text-amber-400 group">
+              <Upload className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold uppercase tracking-wider">Upload Custom Media</span>
+              <span className="text-[10px] text-gray-500 font-mono mt-0.5">PNG, JPG, WebP (Interactive Crop)</span>
               <input
                 type="file"
                 accept="image/*"

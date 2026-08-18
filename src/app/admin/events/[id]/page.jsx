@@ -22,6 +22,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useBackNavigation } from "@/context/NavigationHistoryContext";
+import ImageCropper from "@/components/ui/ImageCropper";
 
 const EVENT_TYPES = [
   "Hackathon",
@@ -889,15 +890,32 @@ export default function EventAdminManagementPage({ params }) {
             </div>
 
             <div className="space-y-4">
-              <label className="text-xs font-bold text-gray-300 block">Banner Image URL</label>
-              <input
-                type="url"
-                name="bannerUrl"
-                value={editForm.bannerUrl}
-                onChange={handleEditChange}
-                placeholder="https://images.unsplash.com/..."
-                className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition font-mono"
-              />
+              <div>
+                <label className="text-xs font-bold text-gray-300 block mb-2">
+                  Event Banner (Upload Custom Media or Select Preset)
+                </label>
+
+                <ImageCropper
+                  currentImageUrl={editForm.bannerUrl}
+                  onCropCompleteCallback={(croppedBase64) =>
+                    setEditForm((p) => ({ ...p, bannerUrl: croppedBase64 }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-neutral-800/80">
+                <label className="text-[11px] font-mono text-gray-400 block">
+                  Or Enter External Media URL:
+                </label>
+                <input
+                  type="url"
+                  name="bannerUrl"
+                  value={editForm.bannerUrl}
+                  onChange={handleEditChange}
+                  placeholder="https://images.unsplash.com/... or https://cdn..."
+                  className="w-full bg-black border border-neutral-800 p-3 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition font-mono"
+                />
+              </div>
 
               {/* Banner Presets */}
               <div className="space-y-2">
@@ -917,22 +935,17 @@ export default function EventAdminManagementPage({ params }) {
                       {preset.label}
                     </button>
                   ))}
+                  {editForm.bannerUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setEditForm((p) => ({ ...p, bannerUrl: "" }))}
+                      className="text-[11px] px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 bg-rose-950/40 hover:bg-rose-900 transition font-bold"
+                    >
+                      Clear Media
+                    </button>
+                  )}
                 </div>
               </div>
-
-              {editForm.bannerUrl && (
-                <div className="relative rounded-lg overflow-hidden border border-neutral-800 max-h-48">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={editForm.bannerUrl}
-                    alt="Banner preview"
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                </div>
-              )}
             </div>
 
             <div className="space-y-2">
