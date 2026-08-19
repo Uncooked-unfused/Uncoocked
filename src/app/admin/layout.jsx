@@ -20,6 +20,7 @@ import {
   Shield,
   ArrowLeft,
   Briefcase,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useBackNavigation } from "@/context/NavigationHistoryContext";
 
@@ -41,6 +42,7 @@ export default function AdminLayout({ children }) {
 
   const navItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { label: "Homepage Metrics", href: "/admin/metrics", icon: SlidersHorizontal },
     { label: "Applications Queue", href: "/admin/applications", icon: ClipboardList },
     { label: "Communications & Requests", href: "/admin/communications", icon: Mail },
     { label: "Job Opportunities", href: "/admin/opportunities", icon: Briefcase },

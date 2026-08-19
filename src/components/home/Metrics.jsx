@@ -19,13 +19,11 @@ export default function Metrics() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {
-          /* REAL BACKEND DATA OVERRIDE COMMENTED OUT
           setCounts({
-            students: data.stats.students ?? 0,
-            activeEvents: data.stats.activeEvents ?? 0,
-            registrations: data.stats.registrations ?? 0,
+            students: Number(data.stats.students) || 0,
+            activeEvents: Number(data.stats.activeEvents) || 0,
+            registrations: Number(data.stats.registrations) || 0,
           });
-          */
         }
       })
       .catch(() => {});

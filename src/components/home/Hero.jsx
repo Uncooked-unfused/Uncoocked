@@ -35,14 +35,12 @@ export default function Hero() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {
-          /* REAL BACKEND DATA OVERRIDE COMMENTED OUT
           setStats({
-            eventsCount: data.stats.activeEvents ?? 0,
-            registrationsCount: data.stats.registrations ?? 0,
-            activeStudents: data.stats.students ?? 0,
-            clubsCount: data.stats.clubs ?? 0,
+            eventsCount: Number(data.stats.activeEvents) || 0,
+            registrationsCount: Number(data.stats.registrations) || 0,
+            activeStudents: Number(data.stats.students) || 0,
+            clubsCount: Number(data.stats.clubs) || 0,
           });
-          */
         }
       })
       .catch(() => {});

@@ -20,9 +20,11 @@ import {
   RefreshCw,
   Star,
   Briefcase,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { getCachedAdminData, fetchWithClientCache } from "@/lib/clientCache";
+import HomepageStatsManager from "@/components/admin/HomepageStatsManager";
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState(() => getCachedAdminData("/api/admin/stats"));
@@ -161,6 +163,12 @@ export default function AdminDashboardPage() {
           >
             <Calendar className="w-3.5 h-3.5 text-pink-400" /> View Events
           </Link>
+          <a
+            href="#homepage-metrics"
+            className="bg-neutral-800 hover:bg-amber-500 hover:text-black text-amber-400 font-bold text-xs px-3.5 py-2 rounded-lg border border-amber-500/30 transition flex items-center gap-1.5"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" /> Homepage Metrics
+          </a>
         </div>
       </div>
 
@@ -251,6 +259,11 @@ export default function AdminDashboardPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Homepage Metrics & Live Counter Manager */}
+      <div id="homepage-metrics">
+        <HomepageStatsManager />
       </div>
 
       {/* Main Content Grid: Pending Work & Recent Activity */}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
+import { getSystemSetting } from "@/server/services/systemSettingsService";
 
 export async function GET() {
   try {
@@ -11,6 +12,11 @@ export async function GET() {
       approvedOrgs,
       departmentGroup,
       eventsWithCustomCount,
+      statsMode,
+      customStudents,
+      customEvents,
+      customRegistrations,
+      customClubs,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.event.count({ where: { status: "Active", archived: false } }),
@@ -36,6 +42,11 @@ export async function GET() {
           _count: { select: { registrations: true } },
         },
       }),
+      getSystemSetting("HOMEPAGE_STATS_MODE", "CUSTOM"),
+      getSystemSetting("HOMEPAGE_STATS_CUSTOM_STUDENTS", 6846),
+      getSystemSetting("HOMEPAGE_STATS_CUSTOM_EVENTS", 8),
+      getSystemSetting("HOMEPAGE_STATS_CUSTOM_REGISTRATIONS", 2346),
+      getSystemSetting("HOMEPAGE_STATS_CUSTOM_CLUBS", 12),
     ]);
 
     let customRegistrationsDelta = 0;
@@ -51,18 +62,38 @@ export async function GET() {
       ...approvedOrgs.map((o) => o.organizationName?.trim()).filter(Boolean),
     ]);
 
+    const actualStats = {
+      students: studentsCount,
+      activeEvents: activeEventsCount,
+      registrations: totalEffectiveRegistrations,
+      clubs: clubNames.size,
+    };
+
+    const parsedCustomStats = {
+      students: Number(customStudents) || 6846,
+      activeEvents: Number(customEvents) || 8,
+      registrations: Number(customRegistrations) || 2346,
+      clubs: Number(customClubs) || 12,
+    };
+
+    const isActual = statsMode === "ACTUAL";
+    const activeStats = isActual ? actualStats : parsedCustomStats;
+
     return NextResponse.json({
       success: true,
+      mode: isActual ? "ACTUAL" : "CUSTOM",
       stats: {
-        students: studentsCount,
-        activeEvents: activeEventsCount,
-        registrations: totalEffectiveRegistrations,
-        clubs: clubNames.size,
+        students: activeStats.students,
+        activeEvents: activeStats.activeEvents,
+        registrations: activeStats.registrations,
+        clubs: activeStats.clubs,
         departments: departmentGroup.map((d) => ({
           name: d.department,
           count: d._count.department,
         })),
       },
+      actualStats,
+      customStats: parsedCustomStats,
     });
   } catch (error) {
     console.error("Stats API error:", error);

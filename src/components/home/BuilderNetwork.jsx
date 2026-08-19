@@ -6,7 +6,7 @@ import { Cpu, Layout, Server, Brain, Palette, Briefcase } from "lucide-react";
 import CountUp from "@/components/ui/CountUp";
 
 export default function BuilderNetwork() {
-  const [studentCount, setStudentCount] = useState(0);
+  const [studentCount, setStudentCount] = useState(6846);
 
   useEffect(() => {
     let isMounted = true;
@@ -14,7 +14,7 @@ export default function BuilderNetwork() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {
-          setStudentCount(data.stats.students || 0);
+          setStudentCount(Number(data.stats.students) || 0);
         }
       })
       .catch(() => {});
