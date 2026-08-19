@@ -3,12 +3,20 @@ import { prisma } from "../db/prisma.js";
 // In-memory cache for settings with fast invalidation
 let settingsCache = new Map();
 let lastFetchTime = 0;
-const CRITICAL_CACHE_TTL_MS = 5 * 1000; // 5-second TTL for high-velocity kill switches
+const CRITICAL_CACHE_TTL_MS = 0; // 0-ms TTL for instant changes to stats, kill switches, and maintenance
 const STANDARD_CACHE_TTL_MS = 60 * 1000;
+
+export function invalidateSystemSettingsCache() {
+  settingsCache.clear();
+  lastFetchTime = 0;
+}
 
 export async function getSystemSetting(key, defaultValue = null) {
   const now = Date.now();
-  const isCriticalKey = key.startsWith("KILL_SWITCH_") || key === "MAINTENANCE_MODE";
+  const isCriticalKey =
+    key.startsWith("KILL_SWITCH_") ||
+    key === "MAINTENANCE_MODE" ||
+    key.startsWith("HOMEPAGE_STATS_");
   const maxAllowedAge = isCriticalKey ? CRITICAL_CACHE_TTL_MS : STANDARD_CACHE_TTL_MS;
 
   if (now - lastFetchTime > maxAllowedAge || !settingsCache.has(key)) {
@@ -63,8 +71,7 @@ export async function setSystemSetting(key, value, updatedBy, type = "BOOLEAN", 
   ]);
 
   // Invalidate cache immediately on update
-  settingsCache.set(key, parseSettingValue(stringValue, type));
-  lastFetchTime = Date.now();
+  invalidateSystemSettingsCache();
   return updated;
 }
 

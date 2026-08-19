@@ -4,3 +4,7 @@ import { withAdminRateLimit } from "@/server/middleware/rateLimit";
 const rateLimitedPost = withAdminRateLimit(POST);
 
 export { GET, rateLimitedPost as POST };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";

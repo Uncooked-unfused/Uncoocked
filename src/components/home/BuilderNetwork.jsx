@@ -10,7 +10,7 @@ export default function BuilderNetwork() {
 
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/stats")
+    fetch(`/api/stats?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {

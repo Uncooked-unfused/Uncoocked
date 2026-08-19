@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireSuperAdmin } from "@/server/auth/guards";
-import { getSystemSetting, setSystemSetting } from "@/server/services/systemSettingsService";
+import { getSystemSetting, setSystemSetting, invalidateSystemSettingsCache } from "@/server/services/systemSettingsService";
 import { invalidateAdminStatsCache } from "@/server/controllers/admin/stats/controller";
 
 async function getLivePlatformStats() {
@@ -157,6 +157,7 @@ export async function POST(request) {
       }
     }
 
+    invalidateSystemSettingsCache();
     invalidateAdminStatsCache();
 
     // Fetch refreshed values

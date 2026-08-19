@@ -6,7 +6,7 @@ import { Users, Calendar, CheckCircle } from "lucide-react";
 import CountUp from "@/components/ui/CountUp";
 
 export default function Metrics() {
-  // Mocked metrics state
+  // Dynamic metrics state synced from /api/stats
   const [counts, setCounts] = useState({
     students: 6846,
     activeEvents: 8,
@@ -15,7 +15,7 @@ export default function Metrics() {
 
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/stats")
+    fetch(`/api/stats?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {

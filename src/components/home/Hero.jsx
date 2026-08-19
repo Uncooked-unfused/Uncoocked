@@ -21,7 +21,7 @@ export default function Hero() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
-  // Mocked display metrics without altering backend API integration logic
+  // Dynamic homepage metrics state synced from /api/stats
   const [stats, setStats] = useState({
     eventsCount: 8,
     registrationsCount: 2346,
@@ -31,7 +31,7 @@ export default function Hero() {
 
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/stats")
+    fetch(`/api/stats?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.stats && isMounted) {

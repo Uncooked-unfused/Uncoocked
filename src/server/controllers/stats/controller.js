@@ -79,22 +79,31 @@ export async function GET() {
     const isActual = statsMode === "ACTUAL";
     const activeStats = isActual ? actualStats : parsedCustomStats;
 
-    return NextResponse.json({
-      success: true,
-      mode: isActual ? "ACTUAL" : "CUSTOM",
-      stats: {
-        students: activeStats.students,
-        activeEvents: activeStats.activeEvents,
-        registrations: activeStats.registrations,
-        clubs: activeStats.clubs,
-        departments: departmentGroup.map((d) => ({
-          name: d.department,
-          count: d._count.department,
-        })),
+    return NextResponse.json(
+      {
+        success: true,
+        mode: isActual ? "ACTUAL" : "CUSTOM",
+        stats: {
+          students: activeStats.students,
+          activeEvents: activeStats.activeEvents,
+          registrations: activeStats.registrations,
+          clubs: activeStats.clubs,
+          departments: departmentGroup.map((d) => ({
+            name: d.department,
+            count: d._count.department,
+          })),
+        },
+        actualStats,
+        customStats: parsedCustomStats,
       },
-      actualStats,
-      customStats: parsedCustomStats,
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Stats API error:", error);
     return NextResponse.json(
