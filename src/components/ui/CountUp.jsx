@@ -9,6 +9,7 @@ export default function CountUp({
   suffix = "",
   prefix = "",
 }) {
+  const targetEnd = Number(end) || 0;
   const [count, setCount] = useState(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
@@ -17,20 +18,29 @@ export default function CountUp({
     if (!isInView) return;
 
     let startTimestamp = null;
+    let animationFrameId = null;
+
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       // Use easeOutQuart easing function for smoother deceleration
       const easeOut = 1 - Math.pow(1 - progress, 4);
-      setCount(Math.floor(easeOut * end));
+      setCount(Math.floor(easeOut * targetEnd));
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        animationFrameId = window.requestAnimationFrame(step);
       } else {
-        setCount(end); // Ensure exact final value
+        setCount(targetEnd); // Ensure exact final value
       }
     };
-    window.requestAnimationFrame(step);
-  }, [end, duration, isInView]);
+
+    animationFrameId = window.requestAnimationFrame(step);
+
+    return () => {
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [targetEnd, duration, isInView]);
 
   return (
     <span ref={ref}>

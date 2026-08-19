@@ -5,10 +5,16 @@ import { motion } from "framer-motion";
 import { Cpu, Layout, Server, Brain, Palette, Briefcase } from "lucide-react";
 import CountUp from "@/components/ui/CountUp";
 
-export default function BuilderNetwork() {
-  const [studentCount, setStudentCount] = useState(6846);
+export default function BuilderNetwork({ initialStudentCount }) {
+  const [studentCount, setStudentCount] = useState(
+    initialStudentCount !== undefined ? Number(initialStudentCount) || 0 : 6846
+  );
 
   useEffect(() => {
+    if (initialStudentCount !== undefined) {
+      setStudentCount(Number(initialStudentCount) || 0);
+    }
+
     let isMounted = true;
     fetch(`/api/stats?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
@@ -22,7 +28,7 @@ export default function BuilderNetwork() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialStudentCount]);
 
   const leftNodes = [
     { name: "CS & Tech", icon: Layout, color: "text-blue-400/70", desc: "Software, Web, AI" },

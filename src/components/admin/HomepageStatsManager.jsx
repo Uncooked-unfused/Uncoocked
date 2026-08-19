@@ -36,7 +36,9 @@ export default function HomepageStatsManager() {
 
   const fetchConfig = useCallback(async (showToast = false) => {
     try {
-      const res = await fetch("/api/admin/homepage-stats");
+      const res = await fetch(`/api/admin/homepage-stats?_t=${Date.now()}`, {
+        cache: "no-store",
+      });
       const json = await res.json();
       if (res.ok && json.success) {
         setData(json);

@@ -16,20 +16,28 @@ const CATEGORIES = [
   { id: "competitions", label: "🏆 Competitions", icon: Trophy },
 ];
 
-export default function Hero() {
+export default function Hero({ initialStats }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
-  // Dynamic homepage metrics state synced from /api/stats
   const [stats, setStats] = useState({
-    eventsCount: 8,
-    registrationsCount: 2346,
-    activeStudents: 6846,
-    clubsCount: 0,
+    eventsCount: initialStats ? Number(initialStats.activeEvents) || 0 : 8,
+    registrationsCount: initialStats ? Number(initialStats.registrations) || 0 : 2346,
+    activeStudents: initialStats ? Number(initialStats.students) || 0 : 6846,
+    clubsCount: initialStats ? Number(initialStats.clubs) || 0 : 12,
   });
 
   useEffect(() => {
+    if (initialStats) {
+      setStats({
+        eventsCount: Number(initialStats.activeEvents) || 0,
+        registrationsCount: Number(initialStats.registrations) || 0,
+        activeStudents: Number(initialStats.students) || 0,
+        clubsCount: Number(initialStats.clubs) || 0,
+      });
+    }
+
     let isMounted = true;
     fetch(`/api/stats?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
@@ -44,10 +52,11 @@ export default function Hero() {
         }
       })
       .catch(() => {});
+
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialStats]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

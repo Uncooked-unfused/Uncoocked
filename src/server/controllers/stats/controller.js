@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { getSystemSetting } from "@/server/services/systemSettingsService";
 
-export async function GET() {
+export async function getHomepageStatsData() {
   try {
     const [
       studentsCount,
@@ -79,31 +79,50 @@ export async function GET() {
     const isActual = statsMode === "ACTUAL";
     const activeStats = isActual ? actualStats : parsedCustomStats;
 
-    return NextResponse.json(
-      {
-        success: true,
-        mode: isActual ? "ACTUAL" : "CUSTOM",
-        stats: {
-          students: activeStats.students,
-          activeEvents: activeStats.activeEvents,
-          registrations: activeStats.registrations,
-          clubs: activeStats.clubs,
-          departments: departmentGroup.map((d) => ({
-            name: d.department,
-            count: d._count.department,
-          })),
-        },
-        actualStats,
-        customStats: parsedCustomStats,
+    return {
+      success: true,
+      mode: isActual ? "ACTUAL" : "CUSTOM",
+      stats: {
+        students: activeStats.students,
+        activeEvents: activeStats.activeEvents,
+        registrations: activeStats.registrations,
+        clubs: activeStats.clubs,
+        departments: departmentGroup.map((d) => ({
+          name: d.department,
+          count: d._count.department,
+        })),
       },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
-          "Pragma": "no-cache",
-          "Expires": "0",
-        },
-      }
-    );
+      actualStats,
+      customStats: parsedCustomStats,
+    };
+  } catch (error) {
+    console.error("Stats calculation error:", error);
+    return {
+      success: false,
+      mode: "CUSTOM",
+      stats: {
+        students: 6846,
+        activeEvents: 8,
+        registrations: 2346,
+        clubs: 12,
+        departments: [],
+      },
+      actualStats: { students: 0, activeEvents: 0, registrations: 0, clubs: 0 },
+      customStats: { students: 6846, activeEvents: 8, registrations: 2346, clubs: 12 },
+    };
+  }
+}
+
+export async function GET() {
+  try {
+    const data = await getHomepageStatsData();
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
+    });
   } catch (error) {
     console.error("Stats API error:", error);
     return NextResponse.json(

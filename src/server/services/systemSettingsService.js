@@ -12,14 +12,26 @@ export function invalidateSystemSettingsCache() {
 }
 
 export async function getSystemSetting(key, defaultValue = null) {
-  const now = Date.now();
   const isCriticalKey =
     key.startsWith("KILL_SWITCH_") ||
     key === "MAINTENANCE_MODE" ||
     key.startsWith("HOMEPAGE_STATS_");
-  const maxAllowedAge = isCriticalKey ? CRITICAL_CACHE_TTL_MS : STANDARD_CACHE_TTL_MS;
 
-  if (now - lastFetchTime > maxAllowedAge || !settingsCache.has(key)) {
+  if (isCriticalKey) {
+    try {
+      const setting = await prisma.systemSetting.findUnique({ where: { key } });
+      if (setting) {
+        return parseSettingValue(setting.value, setting.type);
+      }
+      return defaultValue;
+    } catch (err) {
+      console.error(`Failed to fetch critical setting ${key}:`, err);
+      return defaultValue;
+    }
+  }
+
+  const now = Date.now();
+  if (now - lastFetchTime > STANDARD_CACHE_TTL_MS || !settingsCache.has(key)) {
     await refreshSettingsCache();
   }
   return settingsCache.has(key) ? settingsCache.get(key) : defaultValue;

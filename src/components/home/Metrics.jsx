@@ -5,15 +5,22 @@ import { motion } from "framer-motion";
 import { Users, Calendar, CheckCircle } from "lucide-react";
 import CountUp from "@/components/ui/CountUp";
 
-export default function Metrics() {
-  // Dynamic metrics state synced from /api/stats
+export default function Metrics({ initialStats }) {
   const [counts, setCounts] = useState({
-    students: 6846,
-    activeEvents: 8,
-    registrations: 2346,
+    students: initialStats ? Number(initialStats.students) || 0 : 6846,
+    activeEvents: initialStats ? Number(initialStats.activeEvents) || 0 : 8,
+    registrations: initialStats ? Number(initialStats.registrations) || 0 : 2346,
   });
 
   useEffect(() => {
+    if (initialStats) {
+      setCounts({
+        students: Number(initialStats.students) || 0,
+        activeEvents: Number(initialStats.activeEvents) || 0,
+        registrations: Number(initialStats.registrations) || 0,
+      });
+    }
+
     let isMounted = true;
     fetch(`/api/stats?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
@@ -27,10 +34,11 @@ export default function Metrics() {
         }
       })
       .catch(() => {});
+
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialStats]);
 
   const stats = [
     {
