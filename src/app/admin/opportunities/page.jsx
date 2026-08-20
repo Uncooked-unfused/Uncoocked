@@ -924,10 +924,56 @@ export default function AdminOpportunitiesPage() {
                   )}
 
                   {/* Resume Info */}
-                  {app.resumeName && (
-                    <div className="flex items-center gap-2 text-xs font-mono text-neutral-400">
-                      <FileText className="w-4 h-4 text-amber-500" />
-                      <span>Resume File: {app.resumeName}</span>
+                  {(app.resumeName || app.resumeUrl) && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-neutral-900/60 p-3 rounded-lg border border-neutral-800/80 text-xs font-mono text-neutral-300">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span className="truncate">
+                          Resume File: <strong className="text-white">{app.resumeName || "Attached Document"}</strong>
+                        </span>
+                      </div>
+                      {app.resumeUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!app.resumeUrl) return;
+                            if (app.resumeUrl.startsWith("data:")) {
+                              try {
+                                const arr = app.resumeUrl.split(",");
+                                const mimeMatch = arr[0].match(/:(.*?);/);
+                                const mime = mimeMatch ? mimeMatch[1] : "application/pdf";
+                                const bstr = atob(arr[1]);
+                                let n = bstr.length;
+                                const u8arr = new Uint8Array(n);
+                                while (n--) {
+                                  u8arr[n] = bstr.charCodeAt(n);
+                                }
+                                const blob = new Blob([u8arr], { type: mime });
+                                const blobUrl = URL.createObjectURL(blob);
+                                const win = window.open(blobUrl, "_blank");
+                                if (!win) {
+                                  const a = document.createElement("a");
+                                  a.href = blobUrl;
+                                  a.download = app.resumeName || "resume.pdf";
+                                  a.click();
+                                }
+                              } catch {
+                                window.open(app.resumeUrl, "_blank");
+                              }
+                            } else {
+                              window.open(app.resumeUrl, "_blank");
+                            }
+                          }}
+                          className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-sans font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>View Resume</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-neutral-500 font-sans italic">
+                          (Resume in email notification)
+                        </span>
+                      )}
                     </div>
                   )}
 

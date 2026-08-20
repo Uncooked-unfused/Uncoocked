@@ -104,6 +104,9 @@ export async function POST(request) {
       });
     }
 
+    const fileBuffer = Buffer.from(await resume.arrayBuffer());
+    const resumeDataUrl = `data:${resume.type || "application/pdf"};base64,${fileBuffer.toString("base64")}`;
+
     // Persist application in database
     const application = await prisma.opportunityApplication.create({
       data: {
@@ -114,11 +117,10 @@ export async function POST(request) {
         role,
         message: message || null,
         resumeName: resume.name,
+        resumeUrl: resumeDataUrl,
         status: "PENDING",
       },
     });
-
-    const fileBuffer = Buffer.from(await resume.arrayBuffer());
 
     // Attempt to send email notification (non-blocking failure)
     try {
