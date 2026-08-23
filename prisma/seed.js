@@ -102,6 +102,18 @@ async function main() {
 
   console.log('Seeding users...');
   
+  // Seed Super Admin user
+  await prisma.user.upsert({
+    where: { email: 'shushantshukla62@gmail.com' },
+    update: { role: 'SUPER_ADMIN' },
+    create: {
+      email: 'shushantshukla62@gmail.com',
+      fullName: 'Shushant Shukla',
+      role: 'SUPER_ADMIN',
+      onboardingCompleted: true
+    }
+  });
+
   // Seed a demo user for testing and give them the Organizer role
   const demoPasswordHash = await hashPassword(DEMO_PASSWORD);
   const demoUser = await prisma.user.upsert({

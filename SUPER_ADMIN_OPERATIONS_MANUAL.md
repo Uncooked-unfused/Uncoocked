@@ -21,7 +21,7 @@ The **Super Admin** role represents the highest authorization tier within the **
 
 ### 🔑 Active Credentials for Team Access
 * **Admin Login URL**: [`https://uncooked.in/login`](https://uncooked.in/login)
-* **Super Admin Email**: `unfusedz.admin@gmail.com`
+* **Super Admin Emails**: `shushantshukla62@gmail.com`, `unfusedz.admin@gmail.com`
 * **Password Policy**: Minimum 8 characters, requiring at least one letter and one number.
 
 ### 👁️ Authentication Experience
