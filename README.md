@@ -575,7 +575,7 @@ Uncooked relies on **Pusher** for real-time WebSocket communication across publi
 
 ```mermaid
 graph TD
-    ClientSender[Client User / Host] -->|HTTP POST Message| APIHandler[/api/chat or /api/organizer/bulletin]
+    ClientSender[Client User / Host] -->|HTTP POST Message| APIHandler["/api/chat or /api/organizer/bulletin"]
     APIHandler -->|Save Record| Database[(PostgreSQL)]
     APIHandler -->|Trigger Event| PusherServer[Pusher WebSocket Cloud Server]
     
