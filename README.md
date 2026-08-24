@@ -254,7 +254,7 @@ The database layer is managed via Prisma ORM over PostgreSQL. Below is the compr
 erDiagram
     User ||--o{ Registration : "registers for"
     User ||--o{ UserActivity : "tracks actions"
-    User ||--o? HostApplication : "submits"
+    User ||--o| HostApplication : "submits"
     User ||--o{ SupportTicket : "opens"
     User ||--o{ Notification : "receives"
     User ||--o{ EventManager : "manages"
