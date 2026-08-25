@@ -213,6 +213,10 @@ export async function processReviewAction(applicationId, adminId, action, notes)
   let targetUserRole = null;
 
   switch (action) {
+    case "APPROVE_SUPER_ADMIN":
+      nextStatus = HOST_APPLICATION_STATUS.APPROVED;
+      targetUserRole = "SUPER_ADMIN";
+      break;
     case "APPROVE":
       nextStatus = HOST_APPLICATION_STATUS.APPROVED;
       targetUserRole = "ORGANIZER";
@@ -289,7 +293,10 @@ export async function processReviewAction(applicationId, adminId, action, notes)
     let notificationTitle = "";
     let notificationMessage = "";
 
-    if (action === "APPROVE") {
+    if (action === "APPROVE_SUPER_ADMIN") {
+      notificationTitle = "Super Admin Role Granted! 🛡️";
+      notificationMessage = `Congratulations! You have been granted Super Admin access for "${existingApp.organizationName || "your organization"}".`;
+    } else if (action === "APPROVE") {
       notificationTitle = "Host Application Approved! 🎉";
       notificationMessage = `Congratulations! Your application for "${existingApp.organizationName || "your organization"}" has been approved. You can now host events.`;
     } else if (action === "REJECT") {

@@ -430,12 +430,24 @@ function UsersManagementContent() {
                     </td>
                     <td className="p-4 font-mono text-gray-300">{u._count?.organizedEvents || 0}</td>
                     <td className="p-4 text-right">
-                      <button
-                        onClick={() => setSelectedUser(u)}
-                        className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-3 py-1.5 rounded-md transition text-[11px]"
-                      >
-                        Manage User
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {roleUpper !== "SUPER_ADMIN" && (
+                          <button
+                            disabled={updatingUser}
+                            onClick={() => handleUpdateRole(u.id, "SUPER_ADMIN")}
+                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-2.5 py-1.5 rounded-md transition text-[11px] flex items-center gap-1 shrink-0 disabled:opacity-50"
+                            title="Promote user to Super Admin"
+                          >
+                            <ShieldCheck className="w-3 h-3" /> Make Admin
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setSelectedUser(u)}
+                          className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-3 py-1.5 rounded-md transition text-[11px] shrink-0"
+                        >
+                          Manage User
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

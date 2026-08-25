@@ -38,10 +38,11 @@ const nextConfig = {
   // 1. Production Build & Runtime Optimizations
   output: "standalone", // Strips unneeded node_modules to lower production RAM usage
   productionBrowserSourceMaps: false, // Prevents Node heap overflow during builds
-  swcMinify: true, // Enables fast Rust-based minification
 
   compress: true,
   poweredByHeader: false,
+
+  turbopack: {},
 
   experimental: {
     // Limits Webpack build memory allocation

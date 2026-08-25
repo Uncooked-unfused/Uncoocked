@@ -14,6 +14,7 @@ import {
   MessageSquare,
   ArrowLeft,
   UserCheck,
+  ShieldCheck,
 } from "lucide-react";
 import DocumentViewerModal from "@/components/admin/DocumentViewerModal";
 import { useBackNavigation } from "@/context/NavigationHistoryContext";
@@ -263,13 +264,22 @@ export default function ApplicationDetailPage({ params }) {
             />
             <div className="flex flex-wrap gap-2.5">
               {app.status !== "APPROVED" && (
-                <button
-                  disabled={submitting}
-                  onClick={() => handleActionClick("APPROVE")}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Approve Host
-                </button>
+                <>
+                  <button
+                    disabled={submitting}
+                    onClick={() => handleActionClick("APPROVE")}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Approve Host
+                  </button>
+                  <button
+                    disabled={submitting}
+                    onClick={() => handleActionClick("APPROVE_SUPER_ADMIN")}
+                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" /> Make Super Admin
+                  </button>
+                </>
               )}
               {app.status === "APPROVED" && (
                 <button
