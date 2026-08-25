@@ -97,6 +97,11 @@ body {
   50% { height: 28px; }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
 .animate-fadeIn      { animation: fadeIn 150ms ease-out; }
 .animate-slideUp     { animation: slideUp 200ms ease-out; }
 .animate-spin-slow   { animation: spinSlow 6s linear infinite; }
@@ -104,6 +109,7 @@ body {
 .animate-soundwave1  { animation: soundwave1 800ms ease-in-out infinite; }
 .animate-soundwave2  { animation: soundwave2 650ms ease-in-out infinite; }
 .animate-soundwave3  { animation: soundwave3 950ms ease-in-out infinite; }
+.animate-shimmer     { animation: shimmer 1.8s infinite ease-in-out; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fadeIn,
