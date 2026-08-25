@@ -35,9 +35,17 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  // 1. Production Build & Runtime Optimizations
+  output: "standalone", // Strips unneeded node_modules to lower production RAM usage
+  productionBrowserSourceMaps: false, // Prevents Node heap overflow during builds
+  swcMinify: true, // Enables fast Rust-based minification
+
   compress: true,
   poweredByHeader: false,
+
   experimental: {
+    // Limits Webpack build memory allocation
+    webpackBuildWorker: true,
     optimizePackageImports: [
       "lucide-react",
       "date-fns",
@@ -46,20 +54,36 @@ const nextConfig = {
       "recharts",
     ],
   },
+
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
+    // Restricting default sizes prevents Next.js from caching excessive image variations in RAM
+    deviceSizes: [640, 750, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**",
       },
       {
-        protocol: 'http',
-        hostname: '**',
-      }
+        protocol: "http",
+        hostname: "**",
+      },
     ],
   },
+
+  // 2. Webpack memory controls
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        poll: false,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
+  },
+
   async headers() {
     return [
       {
@@ -68,6 +92,7 @@ const nextConfig = {
       },
     ];
   },
+
   async redirects() {
     return [
       {
