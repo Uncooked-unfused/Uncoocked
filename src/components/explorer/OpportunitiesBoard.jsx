@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { MapPin, DollarSign, ExternalLink, Search, Loader2 } from "lucide-react";
 import OpportunityApplicationModal from "./OpportunityApplicationModal";
 import { mockOpportunities } from "@/lib/mockData";
+import GenZLoader from "@/components/ui/GenZLoader";
 
 export default function OpportunitiesBoard() {
   const [opportunities, setOpportunities] = useState(mockOpportunities);
@@ -93,6 +94,10 @@ export default function OpportunitiesBoard() {
         return "bg-white/5 text-white/50 border border-white/10";
     }
   };
+
+  if (loading) {
+    return <GenZLoader fullScreen={false} text="Scouting raw campus opportunities..." />;
+  }
 
   return (
     <div className="space-y-6 pb-12">

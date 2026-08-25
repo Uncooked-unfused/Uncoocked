@@ -72,8 +72,38 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fadeIn  { animation: fadeIn  150ms ease-out; }
-.animate-slideUp { animation: slideUp 200ms ease-out; }
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes floatUpFade {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-45px) scale(1.4); }
+}
+
+@keyframes soundwave1 {
+  0%, 100% { height: 6px; }
+  50% { height: 24px; }
+}
+
+@keyframes soundwave2 {
+  0%, 100% { height: 18px; }
+  50% { height: 8px; }
+}
+
+@keyframes soundwave3 {
+  0%, 100% { height: 10px; }
+  50% { height: 28px; }
+}
+
+.animate-fadeIn      { animation: fadeIn 150ms ease-out; }
+.animate-slideUp     { animation: slideUp 200ms ease-out; }
+.animate-spin-slow   { animation: spinSlow 6s linear infinite; }
+.animate-floatUpFade { animation: floatUpFade 900ms ease-out forwards; }
+.animate-soundwave1  { animation: soundwave1 800ms ease-in-out infinite; }
+.animate-soundwave2  { animation: soundwave2 650ms ease-in-out infinite; }
+.animate-soundwave3  { animation: soundwave3 950ms ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fadeIn,

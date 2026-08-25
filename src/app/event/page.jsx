@@ -6,13 +6,11 @@ import EventsExplorer from "@/components/explorer/EventsExplorer";
 import { mockEvents } from "@/lib/mockData";
 import { useUser } from "@/context/UserContext";
 
+import GenZLoader from "@/components/ui/GenZLoader";
+
 const TwinLayout = nextDynamic(() => import("@/components/layout/TwinLayout"), {
   ssr: false,
-  loading: () => (
-    <div className="min-h-[500px] flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  ),
+  loading: () => <GenZLoader fullScreen={false} text="Assembling event matrix..." />,
 });
 
 const RecommendedEvents = nextDynamic(() => import("@/components/event/RecommendedEvents"), {
@@ -187,16 +185,9 @@ export default function EventPage() {
       );
     }
 
-    // Show loading skeleton if still fetching events for the ID
+    // Show loading state if still fetching events for the ID
     if (loading) {
-      return (
-        <div className="bg-[#000000] w-full min-h-screen text-white flex items-center justify-center p-8">
-          <div className="animate-pulse flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs text-white/50">Loading event details...</span>
-          </div>
-        </div>
-      );
+      return <GenZLoader fullScreen={true} text="Retrieving event details..." />;
     }
   }
 

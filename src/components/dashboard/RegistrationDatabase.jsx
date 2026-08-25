@@ -14,6 +14,7 @@ import {
   Clock,
 } from "lucide-react";
 import { formatDate } from "@/lib/dateUtils";
+import GenZLoader from "@/components/ui/GenZLoader";
 
 export default function RegistrationDatabase() {
   const [registrations, setRegistrations] = useState([]);
@@ -203,24 +204,12 @@ export default function RegistrationDatabase() {
             </thead>
 
             {loading ? (
-              /* Loading Skeleton UI */
-              <tbody className="divide-y divide-dark-border/40">
-                {[1, 2, 3, 4].map((n) => (
-                  <tr key={n} className="animate-pulse">
-                    <td className="py-4 px-6">
-                      <div className="h-3.5 w-32 bg-zinc-800 rounded-md"></div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="h-3.5 w-44 bg-zinc-800 rounded-md"></div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="h-3.5 w-24 bg-zinc-800 rounded-md"></div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="h-5 w-20 bg-zinc-800 rounded-full"></div>
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                <tr>
+                  <td colSpan={4} className="py-8">
+                    <GenZLoader fullScreen={false} text="Syncing attendee records..." />
+                  </td>
+                </tr>
               </tbody>
             ) : (
               <tbody className="divide-y divide-dark-border/40 font-mono text-xs">

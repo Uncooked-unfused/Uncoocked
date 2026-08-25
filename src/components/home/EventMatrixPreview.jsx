@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Calendar, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { formatDate } from "@/lib/dateUtils";
+import GenZLoader from "@/components/ui/GenZLoader";
 
 const fmtDate = (d) => formatDate(d);
 
@@ -138,9 +139,7 @@ export default function EventMatrixPreview() {
 
         {/* Events Grid */}
         {loading ? (
-          <div className="text-center py-16 bg-[#111111] border border-white/6 rounded-xl text-[12px] text-white/40 font-mono animate-pulse">
-            Loading events matrix...
-          </div>
+          <GenZLoader fullScreen={false} text="Syncing event matrix..." />
         ) : error ? (
           <div className="text-center py-16 bg-[#111111] border border-white/6 rounded-xl text-[12px] text-red-400/80">
             Failed to load events. Please refresh to try again.

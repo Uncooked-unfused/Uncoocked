@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import GenZLoader from "@/components/ui/GenZLoader";
 
 export default function RegisterModal({
   open,
@@ -43,6 +44,7 @@ export default function RegisterModal({
       />
 
       <div className="relative w-full max-w-2xl mx-4 bg-[#0a0a0a] rounded-xl border border-zinc-800 shadow-2xl overflow-hidden animate-fadeIn">
+        {loading && <GenZLoader overlay={true} text="Securing your event ticket..." />}
         <div className="px-6 py-5 border-b border-zinc-800/80">
           <h3 className="text-base font-medium text-white tracking-tight">
             Register for event
