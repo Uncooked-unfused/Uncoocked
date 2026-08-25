@@ -5,6 +5,11 @@ export async function middleware(req) {
   const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
   const path = req.nextUrl.pathname;
 
+  // Always allow NextAuth API endpoints to pass through cleanly
+  if (path.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
   // Extract JWT token securely from request cookies with multi-environment fallback
   let token = await getToken({
     req,
@@ -89,11 +94,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
+     * - api/auth (NextAuth API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public assets (.svg, .png, .jpg, .jpeg, .gif, .webp, .ico, .txt, .xml)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml)$).*)",
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml)$).*)",
   ],
 };
