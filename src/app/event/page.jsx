@@ -208,6 +208,7 @@ export default function EventPage() {
 
         <EventsExplorer
           events={allEvents}
+          loading={loading}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onSelectEvent={handleSelectEvent}

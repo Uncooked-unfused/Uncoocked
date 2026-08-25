@@ -100,7 +100,12 @@ export default function Navbar() {
                     <Link
                       key={link.name}
                       href={link.href}
-                      className={`text-[11px] font-semibold tracking-wide transition-colors duration-150 relative py-1 ${
+                      onClick={() => {
+                        if (pathname === link.href) {
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }
+                      }}
+                      className={`text-[11px] font-semibold tracking-wide transition-colors duration-150 relative py-1 cursor-pointer ${
                         isActive
                           ? "text-white"
                           : "text-white/50 hover:text-white/80"
@@ -260,7 +265,12 @@ export default function Navbar() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      if (pathname === link.href) {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }
+                    }}
                     className={`block px-3 py-2.5 rounded-lg text-[12px] font-semibold transition-all duration-150 ${
                       isActive
                         ? "bg-white/8 text-white"

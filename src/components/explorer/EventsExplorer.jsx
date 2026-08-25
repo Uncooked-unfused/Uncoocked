@@ -7,9 +7,11 @@ import { Search, Calendar, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { LUCKNOW_ZONES } from "@/config/cities";
 import { formatDate } from "@/lib/dateUtils";
+import GenZLoader from "@/components/ui/GenZLoader";
 
 export default function EventsExplorer({
   events,
+  loading = false,
   searchQuery,
   onSearchChange,
   onSelectEvent,
@@ -239,7 +241,9 @@ export default function EventsExplorer({
         </div>
 
         {/* Dynamic Grid of Upcoming Cards */}
-        {upcomingEvents.length === 0 ? (
+        {loading ? (
+          <GenZLoader fullScreen={false} text="Syncing upcoming campus events..." />
+        ) : upcomingEvents.length === 0 ? (
           <div className="text-center py-10 text-white/50 bg-[#111111] border border-white/8 rounded-2xl">
             <p className="text-[13px]">No upcoming events match your active filters.</p>
           </div>
@@ -337,7 +341,9 @@ export default function EventsExplorer({
         </div>
 
         {/* Grid of Completed Events */}
-        {completedEvents.length === 0 ? (
+        {loading ? (
+          <GenZLoader fullScreen={false} text="Retrieving archived campus events..." />
+        ) : completedEvents.length === 0 ? (
           <div className="text-center py-10 text-white/40 bg-[#0E0E0E] border border-white/6 rounded-2xl">
             <p className="text-[13px]">No completed campus events found.</p>
           </div>

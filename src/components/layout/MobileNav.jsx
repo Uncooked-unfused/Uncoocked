@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Briefcase, PlusCircle, Users, User } from "lucide-react";
+import { Home, Calendar, Briefcase, PlusCircle, User } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 
 export default function MobileNav() {
@@ -15,10 +15,10 @@ export default function MobileNav() {
   }
 
   const navItems = [
+    { name: "Home", href: "/", icon: Home },
     { name: "Events", href: "/event", icon: Calendar },
     { name: "Opps", href: "/opportunities", icon: Briefcase },
     { name: "Host", href: "/host", icon: PlusCircle, isCta: true },
-    { name: "Clubs", href: "/partners", icon: Users },
     { name: "Profile", href: user ? "/profile" : "/login", icon: User },
   ];
 
@@ -27,7 +27,7 @@ export default function MobileNav() {
       <nav className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
+          const isActive = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
 
           if (item.isCta) {
             return (
@@ -50,6 +50,11 @@ export default function MobileNav() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => {
+                if (pathname === item.href) {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
               className={`flex flex-col items-center justify-center py-1 px-2 transition-colors duration-150 ${
                 isActive ? "text-purple-400 font-semibold" : "text-white/40 hover:text-white/70"
               }`}

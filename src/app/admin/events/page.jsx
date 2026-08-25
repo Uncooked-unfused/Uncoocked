@@ -19,6 +19,7 @@ import {
 
 import { fetchWithClientCache, invalidateClientCache } from "@/lib/clientCache";
 import { formatDate } from "@/lib/dateUtils";
+import GenZLoader from "@/components/ui/GenZLoader";
 
 function EventModerationQueueContent() {
   const [events, setEvents] = useState([]);
@@ -387,8 +388,8 @@ function EventModerationQueueContent() {
           <tbody className="divide-y divide-neutral-800/60">
             {loading ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-gray-500">
-                  Loading event moderation queue...
+                <td colSpan={7} className="p-8">
+                  <GenZLoader fullScreen={false} text="Syncing event moderation queue..." />
                 </td>
               </tr>
             ) : events.length === 0 ? (
