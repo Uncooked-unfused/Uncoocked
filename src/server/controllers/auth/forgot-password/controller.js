@@ -12,7 +12,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request) {
   try {
-    const rl = rateLimit(`forgot-password:${getClientIp(request)}`, {
+    const rl = await rateLimit(`forgot-password:${getClientIp(request)}`, {
       limit: 5,
       windowMs: 60 * 1000,
     });

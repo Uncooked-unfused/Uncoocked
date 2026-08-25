@@ -12,7 +12,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(request) {
   try {
     // Per-IP rate limit on signup (10 requests / minute).
-    const rl = rateLimit(`register:${getClientIp(request)}`, {
+    const rl = await rateLimit(`register:${getClientIp(request)}`, {
       limit: 10,
       windowMs: 60 * 1000,
     });

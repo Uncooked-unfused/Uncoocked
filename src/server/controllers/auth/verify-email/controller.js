@@ -52,7 +52,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const rl = rateLimit(`resend-verification:${getClientIp(request)}`, {
+    const rl = await rateLimit(`resend-verification:${getClientIp(request)}`, {
       limit: 5,
       windowMs: 60 * 1000,
     });

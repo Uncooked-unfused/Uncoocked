@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { redis } from "../../lib/redis.js";
 
 // In-memory ring buffer for recent API response times (last 200 requests)
 const MAX_BUFFER_SIZE = 200;
@@ -28,6 +29,17 @@ export async function measureDatabaseLatency() {
   }
 }
 
+export async function measureRedisLatency() {
+  const start = Date.now();
+  try {
+    await redis.set("health:ping", "pong", 10);
+    const res = await redis.get("health:ping");
+    return res === "pong" ? Date.now() - start : -1;
+  } catch (err) {
+    return -1;
+  }
+}
+
 export function getSystemMemoryMetrics() {
   const mem = process.memoryUsage();
   return {
@@ -47,7 +59,7 @@ export function calculateP95Latency() {
 
 let cachedHealth = null;
 let lastHealthCheckTime = 0;
-const HEALTH_CACHE_TTL_MS = 30_000;
+const HEALTH_CACHE_TTL_MS = 15_000;
 
 export async function getSystemHealthStatus() {
   const now = Date.now();
@@ -56,6 +68,9 @@ export async function getSystemHealthStatus() {
   }
 
   const dbLatencyMs = await measureDatabaseLatency();
+  const redisLatencyMs = await measureRedisLatency();
+  const redisConnected = redis.isRedisConnected();
+  const redisMetrics = redis.getMetrics();
   const memory = getSystemMemoryMetrics();
   const p95LatencyMs = calculateP95Latency();
   const errorRatePct = totalRequests > 0 ? Math.round((errorRequests / totalRequests) * 10000) / 100 : 0;
@@ -66,6 +81,9 @@ export async function getSystemHealthStatus() {
     status: isHealthy ? "HEALTHY" : "DEGRADED",
     dbStatus: dbLatencyMs >= 0 ? "CONNECTED" : "DISCONNECTED",
     dbLatencyMs,
+    redisStatus: redisConnected ? "CONNECTED" : "FALLBACK_IN_MEMORY",
+    redisLatencyMs: redisLatencyMs >= 0 ? redisLatencyMs : null,
+    redisMetrics,
     p95LatencyMs,
     memory,
     errorRatePct,

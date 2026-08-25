@@ -1,28 +1,14 @@
-// Lightweight in-memory rate limiter (per-IP). Suitable for a single-instance
-// MVP. For multi-instance production, swap this Map for Redis/Upstash.
-const buckets = new Map();
+import { redis } from "../../lib/redis.js";
 
-// Entry shape: { count: number, resetAt: number }
-export function rateLimit(key, { limit = 10, windowMs = 60 * 1000 } = {}) {
-  const now = Date.now();
-  const entry = buckets.get(key);
-
-  if (!entry || now > entry.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
+// Centralized Redis-backed sliding window rate limiter
+export async function rateLimit(key, { limit = 10, windowMs = 60 * 1000 } = {}) {
+  try {
+    return await redis.rateLimit(key, { limit, windowMs });
+  } catch (err) {
+    console.error(`⚠️ Rate limit evaluation failed for key "${key}":`, err.message);
+    // Allow request on rate limit internal failure to prevent locking out users
     return { success: true, remaining: limit - 1, retryAfter: 0 };
   }
-
-  if (entry.count >= limit) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    return { success: false, remaining: 0, retryAfter };
-  }
-
-  entry.count += 1;
-  return {
-    success: true,
-    remaining: limit - entry.count,
-    retryAfter: 0,
-  };
 }
 
 // Extract the client IP from a NextRequest, route-handler Request, or NextAuth req object.
@@ -53,7 +39,6 @@ export function getClientIp(request) {
 export function withAdminRateLimit(handler, { limit = 20, windowMs = 60 * 1000 } = {}) {
   return async function (request, context) {
     const ip = getClientIp(request);
-    // Dynamic import getAuthToken to avoid circular dependencies if needed
     let userId = null;
     try {
       const { getAuthToken } = await import("@/server/auth/guards");
@@ -63,8 +48,8 @@ export function withAdminRateLimit(handler, { limit = 20, windowMs = 60 * 1000 }
       // Fallback to IP if token extraction fails
     }
 
-    const key = `admin_rl:${userId || ip}`;
-    const rl = rateLimit(key, { limit, windowMs });
+    const key = `admin:${userId || ip}`;
+    const rl = await rateLimit(key, { limit, windowMs });
 
     if (!rl.success) {
       const { NextResponse } = await import("next/server");

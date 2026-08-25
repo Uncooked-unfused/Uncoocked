@@ -1,38 +1,17 @@
-// Sliding Window Rate Limiter for Sensitive Endpoints
-const rateLimitStore = new Map();
+import { redis } from "../../lib/redis.js";
 
-export function checkRateLimit(identifier, { limit = 20, windowMs = 60 * 1000 } = {}) {
-  const now = Date.now();
-  const userRecord = rateLimitStore.get(identifier) || [];
-
-  // Filter out timestamps outside the sliding window
-  const validRequests = userRecord.filter((timestamp) => now - timestamp < windowMs);
-
-  if (validRequests.length >= limit) {
+// Centralized sliding window rate limiter for sensitive endpoints
+export async function checkRateLimit(identifier, { limit = 20, windowMs = 60 * 1000 } = {}) {
+  try {
+    const res = await redis.rateLimit(identifier, { limit, windowMs });
     return {
-      success: false,
-      limit,
-      remaining: 0,
-      resetMs: windowMs - (now - validRequests[0]),
+      success: res.success,
+      limit: res.limit,
+      remaining: res.remaining,
+      resetMs: res.retryAfter * 1000,
     };
+  } catch (err) {
+    console.error(`⚠️ Sensitive endpoint rate limit check failed for "${identifier}":`, err.message);
+    return { success: true, limit, remaining: limit - 1, resetMs: 0 };
   }
-
-  validRequests.push(now);
-  rateLimitStore.set(identifier, validRequests);
-
-  // Periodic Cleanup
-  if (rateLimitStore.size > 1000) {
-    for (const [key, timestamps] of rateLimitStore.entries()) {
-      if (timestamps.every((ts) => now - ts >= windowMs)) {
-        rateLimitStore.delete(key);
-      }
-    }
-  }
-
-  return {
-    success: true,
-    limit,
-    remaining: limit - validRequests.length,
-    resetMs: windowMs,
-  };
 }

@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/server/db/prisma';
 import { getAuthToken, requireEventManager } from "@/server/auth/guards";
-import { invalidateEventsCache } from '@/server/services/eventsCacheService';
+import { getCachedEventDetail, setCachedEventDetail, invalidateEventsCache } from '@/server/services/eventsCacheService';
 import { validateAndSanitizeEventData } from '@/server/services/eventSanitizerService';
 
 export async function GET(request, context) {
   try {
     const params = await context.params;
     const eventId = params.id;
+
+    const cached = await getCachedEventDetail(eventId);
+    if (cached) {
+      return NextResponse.json({ success: true, event: cached, cached: true });
+    }
+
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -37,6 +43,8 @@ export async function GET(request, context) {
         registrations: effectiveRegistrations,
       },
     };
+
+    await setCachedEventDetail(eventId, sanitizedEvent);
 
     return NextResponse.json({ success: true, event: sanitizedEvent });
   } catch (error) {
@@ -95,7 +103,7 @@ export async function PUT(request, context) {
       data: updateData,
     });
 
-    invalidateEventsCache();
+    await invalidateEventsCache(eventId);
 
     return NextResponse.json({
       success: true,
@@ -124,7 +132,7 @@ export async function DELETE(request, context) {
       where: { id: eventId },
     });
 
-    invalidateEventsCache();
+    await invalidateEventsCache(eventId);
 
     return NextResponse.json({
       success: true,

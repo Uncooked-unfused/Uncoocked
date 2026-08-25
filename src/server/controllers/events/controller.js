@@ -16,7 +16,7 @@ export async function GET(request) {
     const zoneFilter = searchParams.get('zone');
 
     const cacheKey = `events:${includeArchived}:${statusParam || ''}:${typeFilter || ''}:${categoryFilter || ''}:${zoneFilter || ''}`;
-    const cached = getCachedEvents(cacheKey);
+    const cached = await getCachedEvents(cacheKey);
     if (cached) {
       return NextResponse.json(
         { success: true, events: cached, cached: true },
@@ -100,7 +100,7 @@ export async function GET(request) {
       };
     });
 
-    setCachedEvents(cacheKey, events);
+    await setCachedEvents(cacheKey, events);
 
     return NextResponse.json(
       {
@@ -129,6 +129,16 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Please verify your email address before creating events.' }, { status: 403 });
     }
 
+    // Rate limiting event creation per user (10 events / minute)
+    const { redis } = await import('@/lib/redis');
+    const rl = await redis.rateLimit(`event-create:${token.sub}`, { limit: 10, windowMs: 60 * 1000 });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Too many event creation attempts. Please wait before retrying.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
+
     // Verify host/organizer eligibility using centralized host verification service
     const isEligible = await isUserEligibleToHost(token.sub);
     if (!isEligible) {
@@ -137,7 +147,6 @@ export async function POST(request) {
         { status: 403 }
       );
     }
-
 
     const rawData = await request.json();
     const validation = validateAndSanitizeEventData(rawData);
@@ -186,7 +195,7 @@ export async function POST(request) {
       },
     });
 
-    invalidateEventsCache();
+    await invalidateEventsCache(newEvent.id);
 
     return NextResponse.json({
       success: true,

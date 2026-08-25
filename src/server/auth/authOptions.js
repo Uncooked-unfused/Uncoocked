@@ -25,7 +25,7 @@ export const authOptions = {
         // Per-IP (or per-account fallback) rate limit on credential attempts (10 / minute).
         const clientIp = getClientIp(req);
         const rateKey = clientIp !== "unknown" ? `login:ip:${clientIp}` : `login:email:${email}`;
-        const rl = rateLimit(rateKey, {
+        const rl = await rateLimit(rateKey, {
           limit: 10,
           windowMs: 60 * 1000,
         });
