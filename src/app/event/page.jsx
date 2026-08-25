@@ -25,6 +25,7 @@ export default function EventPage() {
   const [loading, setLoading] = useState(true);
 
   const loadEvents = async () => {
+    const startTime = Date.now();
     try {
       setLoading(true);
       const res = await fetch("/api/events", { cache: "no-store" });
@@ -38,7 +39,11 @@ export default function EventPage() {
       console.error("Failed to load events", err);
       setAllEvents(mockEvents);
     } finally {
-      setLoading(false);
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 300 - elapsed);
+      setTimeout(() => {
+        setLoading(false);
+      }, remainingDelay);
     }
   };
 

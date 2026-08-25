@@ -39,6 +39,7 @@ export default function EventMatrixPreview() {
   useEffect(() => {
     let isMounted = true;
     const loadEvents = async () => {
+      const startTime = Date.now();
       try {
         setLoading(true);
         setError(false);
@@ -101,7 +102,11 @@ export default function EventMatrixPreview() {
         console.error("Failed to fetch events:", err);
         if (isMounted) setError(true);
       } finally {
-        if (isMounted) setLoading(false);
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 300 - elapsed);
+        setTimeout(() => {
+          if (isMounted) setLoading(false);
+        }, remainingDelay);
       }
     };
     loadEvents();
