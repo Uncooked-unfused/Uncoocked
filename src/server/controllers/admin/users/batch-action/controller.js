@@ -14,7 +14,7 @@ export const POST = withAdminRateLimit(async function POST(request) {
       return NextResponse.json({ error: "Missing or empty userIds array" }, { status: 400 });
     }
 
-    if (!["SUSPEND", "REACTIVATE", "SET_ROLE_USER", "SET_ROLE_ORGANIZER"].includes(action)) {
+    if (!["SUSPEND", "REACTIVATE", "SET_ROLE_USER", "SET_ROLE_ORGANIZER", "SET_ROLE_SUPER_ADMIN"].includes(action)) {
       return NextResponse.json({ error: "Invalid batch action" }, { status: 400 });
     }
 
@@ -29,11 +29,6 @@ export const POST = withAdminRateLimit(async function POST(request) {
         });
 
         if (!user) continue;
-
-        if (user.role === "SUPER_ADMIN" || user.id === admin.id) {
-          errors.push({ userId, error: "Cannot perform bulk actions on Super Admin or self account" });
-          continue;
-        }
 
         if (action === "SUSPEND" || action === "REACTIVATE") {
           const isSuspending = action === "SUSPEND";
@@ -76,8 +71,13 @@ export const POST = withAdminRateLimit(async function POST(request) {
               reason,
             }).catch((err) => console.error("Batch status email failed:", err));
           }
-        } else if (action === "SET_ROLE_USER" || action === "SET_ROLE_ORGANIZER") {
-          const newRole = action === "SET_ROLE_ORGANIZER" ? "ORGANIZER" : "USER";
+        } else if (["SET_ROLE_USER", "SET_ROLE_ORGANIZER", "SET_ROLE_SUPER_ADMIN"].includes(action)) {
+          const newRole =
+            action === "SET_ROLE_SUPER_ADMIN"
+              ? "SUPER_ADMIN"
+              : action === "SET_ROLE_ORGANIZER"
+              ? "ORGANIZER"
+              : "USER";
           const previousRole = user.role;
 
           await prisma.$transaction([

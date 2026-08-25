@@ -294,16 +294,28 @@ function UsersManagementContent() {
 
       {/* Floating Batch Actions Toolbar */}
       {selectedIds.length > 0 && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between animate-fadeIn">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
           <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
             <CheckSquare className="w-4 h-4" /> Selected <span className="underline">{selectedIds.length}</span> users
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setBatchModal({ action: "SET_ROLE_SUPER_ADMIN" })}
+              className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-3 py-1.5 rounded-md transition"
+            >
+              Make Super Admins
+            </button>
             <button
               onClick={() => setBatchModal({ action: "SET_ROLE_ORGANIZER" })}
               className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-md transition"
             >
               Make Organizers
+            </button>
+            <button
+              onClick={() => setBatchModal({ action: "SET_ROLE_USER" })}
+              className="bg-neutral-800 hover:bg-neutral-700 text-gray-300 font-bold text-xs px-3 py-1.5 rounded-md border border-neutral-700 transition"
+            >
+              Make Users
             </button>
             <button
               onClick={() => setBatchModal({ action: "SUSPEND" })}
@@ -503,40 +515,66 @@ function UsersManagementContent() {
                 className="w-full bg-neutral-900 border border-neutral-800 p-2.5 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
               />
 
-              <div className="flex flex-wrap gap-2">
-                {(selectedUser.role || "").toUpperCase() !== "ORGANIZER" && (
+              <div className="space-y-2">
+                <span className="text-[10px] text-gray-400 uppercase font-bold block">Assign Account Role</span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    disabled={updatingUser}
+                    onClick={() => handleUpdateRole(selectedUser.id, "SUPER_ADMIN")}
+                    className={`font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-1.5 ${
+                      (selectedUser.role || "").toUpperCase() === "SUPER_ADMIN"
+                        ? "bg-purple-600 text-white ring-2 ring-purple-400 font-extrabold"
+                        : "bg-purple-950/60 hover:bg-purple-900 text-purple-300 border border-purple-800/60"
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    {(selectedUser.role || "").toUpperCase() === "SUPER_ADMIN" ? "Current: SUPER_ADMIN" : "Assign SUPER_ADMIN"}
+                  </button>
+
                   <button
                     disabled={updatingUser}
                     onClick={() => handleUpdateRole(selectedUser.id, "ORGANIZER")}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50"
+                    className={`font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-1.5 ${
+                      (selectedUser.role || "").toUpperCase() === "ORGANIZER"
+                        ? "bg-emerald-600 text-white ring-2 ring-emerald-400 font-extrabold"
+                        : "bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/60"
+                    }`}
                   >
-                    Promote to ORGANIZER
+                    <Building2 className="w-3.5 h-3.5" />
+                    {(selectedUser.role || "").toUpperCase() === "ORGANIZER" ? "Current: ORGANIZER" : "Assign ORGANIZER"}
                   </button>
-                )}
-                {(selectedUser.role || "").toUpperCase() !== "USER" && (
+
                   <button
                     disabled={updatingUser}
                     onClick={() => handleUpdateRole(selectedUser.id, "USER")}
-                    className="bg-neutral-800 hover:bg-neutral-700 text-gray-300 font-bold text-xs px-3.5 py-2 rounded-lg border border-neutral-700 transition disabled:opacity-50"
+                    className={`font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-1.5 ${
+                      (selectedUser.role || "").toUpperCase() === "USER"
+                        ? "bg-neutral-700 text-white ring-2 ring-neutral-400 font-extrabold"
+                        : "bg-neutral-800 hover:bg-neutral-700 text-gray-300 border border-neutral-700"
+                    }`}
                   >
-                    Demote to USER
+                    <Users className="w-3.5 h-3.5" />
+                    {(selectedUser.role || "").toUpperCase() === "USER" ? "Current: USER" : "Assign USER"}
                   </button>
-                )}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-neutral-800">
                 {Boolean(selectedUser.lockedUntil && new Date(selectedUser.lockedUntil) > new Date()) ? (
                   <button
                     disabled={updatingUser}
                     onClick={() => handleToggleStatus(selectedUser.id, true)}
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50"
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50 w-full"
                   >
-                    Reactivate Account
+                    Reactivate Account Access
                   </button>
                 ) : (
                   <button
                     disabled={updatingUser}
                     onClick={() => handleToggleStatus(selectedUser.id, false)}
-                    className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50"
+                    className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition disabled:opacity-50 w-full"
                   >
-                    Suspend Account
+                    Suspend Account Access
                   </button>
                 )}
               </div>
